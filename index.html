@@ -350,6 +350,41 @@
     .jump-btn:hover { background: #f5f5f5; }
     .jump-btn.active-section { background: #111827; color: #fff; border-color: #111827; }
 
+    /* ── BIG O ───────────────────────────────────── */
+    .bigo-complexity-table { width:100%; border-collapse:collapse; font-size:12px; background:#fff; border:var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:8px; }
+    .bigo-complexity-table th { padding:8px 12px; text-align:left; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); background:#f9fafb; border-bottom:var(--border); white-space:nowrap; }
+    .bigo-complexity-table td { padding:8px 12px; border-bottom:var(--border); vertical-align:middle; }
+    .bigo-complexity-table tr:last-child td { border-bottom:none; }
+    .bigo-complexity-table td:nth-child(2) { font-family:'Fira Code',monospace; font-size:11.5px; font-weight:700; }
+    .bigo-complexity-table td:nth-child(n+3) { font-family:'Fira Code',monospace; font-size:11px; color:#374151; }
+    .bigo-chip { display:inline-block; font-family:'Fira Code',monospace; font-size:11.5px; font-weight:700; padding:2px 8px; border-radius:4px; }
+    .bigo-card { background:#fff; border:var(--border); border-radius:var(--radius); margin-bottom:10px; overflow:hidden; }
+    .bigo-header { display:flex; align-items:flex-start; gap:12px; padding:14px 18px; cursor:pointer; user-select:none; }
+    .bigo-header:hover { background:#fafafa; }
+    .bigo-header-left { flex:1; }
+    .bigo-title-row { display:flex; align-items:center; gap:10px; margin-bottom:4px; flex-wrap:wrap; }
+    .bigo-name { font-size:15px; font-weight:700; color:#111827; }
+    .bigo-scale { font-size:12px; color:var(--muted); }
+    .bigo-n1000 { font-family:'Fira Code',monospace; font-size:11px; background:#f3f4f6; color:#374151; padding:2px 7px; border-radius:3px; }
+    .bigo-body { padding:0 18px 18px; border-top:var(--border); }
+    .bigo-desc { font-size:13.5px; color:#374151; line-height:1.65; margin:12px 0 10px; }
+    .bigo-examples { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
+    .bigo-example-pill { font-family:'Fira Code',monospace; font-size:11.5px; background:var(--code-bg); color:#374151; padding:3px 8px; border-radius:3px; }
+    .bigo-rules-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:10px; margin-bottom:8px; }
+    .bigo-rule { background:#fff; border:var(--border); border-radius:var(--radius); padding:14px 16px; }
+    .bigo-rule-title { font-size:13px; font-weight:700; color:#111827; margin-bottom:6px; }
+    .bigo-rule-body { font-size:12.5px; color:#4b5563; line-height:1.6; }
+    .bigo-rule-example { font-family:'Fira Code',monospace; font-size:11.5px; background:var(--code-bg); color:#374151; padding:4px 8px; border-radius:3px; margin-top:8px; white-space:pre; overflow-x:auto; display:block; }
+    .bigo-ds-table { width:100%; border-collapse:collapse; font-size:12.5px; background:#fff; }
+    .bigo-ds-table th { padding:7px 14px; text-align:left; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); background:#f9fafb; border-bottom:var(--border); }
+    .bigo-ds-table td { padding:8px 14px; border-bottom:var(--border); }
+    .bigo-ds-table tr:last-child td { border-bottom:none; }
+    .bigo-ds-table td:nth-child(2), .bigo-ds-table td:nth-child(3) { font-family:'Fira Code',monospace; font-size:11.5px; }
+    .bigo-ds-table tr:hover td { background:#fafafa; }
+    .bigo-space-item { background:#fff; border:var(--border); border-radius:var(--radius); padding:12px 16px; margin-bottom:8px; }
+    .bigo-space-row { display:flex; align-items:baseline; gap:10px; }
+    .bigo-space-notation { font-family:'Fira Code',monospace; font-size:13px; font-weight:700; min-width:90px; }
+    .bigo-space-text { font-size:13px; color:#4b5563; line-height:1.55; }
     /* ── RITUAL ──────────────────────────────────── */
     .ritual-step { display: flex; align-items: flex-start; gap: 16px; background: #fff; border: var(--border); border-radius: var(--radius); padding: 16px 18px; }
     .ritual-num { font-family: 'Fira Code', monospace; font-size: 24px; font-weight: 700; color: var(--blue); min-width: 30px; line-height: 1.1; flex-shrink: 0; }
@@ -928,6 +963,301 @@ const BRIEF_TEMPLATES = [
   { name:'Backtracking', sub:'All combinations/permutations',
     code:`def backtrack(start, current, remaining):\n    if remaining == 0:\n        results.append(list(current)); return\n    for i in range(start, len(candidates)):\n        current.append(candidates[i])\n        backtrack(i, current, remaining - candidates[i])\n        current.pop()` },
 ];
+
+// ── Big O Data ────────────────────────────────────────────────
+const BIGO_COMPLEXITIES = [
+  { notation:'O(1)', name:'Constant', bc:'#D1FAE5', bt:'#065F46',
+    scale:'Does not grow with n. Always the same number of steps.',
+    n:{'10':'1','100':'1','1,000':'1','1,000,000':'1'},
+    desc:'The algorithm performs a fixed amount of work regardless of input size. O(1) does not mean "one operation" — it means the number of operations is bounded by a constant that does not depend on n.',
+    examples:['arr[i] — index access','d[key] — hash map get','stack.append(x) — push','heap[0] — peek min/max','set membership: x in s'],
+    code:[
+      {c:"x = arr[5]",n:'The CPU calculates the memory address directly (base + 5 × element_size). No loop, no search.'},
+      {c:"val = my_dict['key']",n:"Hash('key') → integer → bucket index → value. Doesn't scan the dict. Average O(1); worst-case O(n) from collisions."},
+      {c:"stack.append(item)",n:"Append to end of Python list. O(1) amortized — occasionally doubles capacity (O(n)) but averaged across n appends = O(1) each."},
+      {c:"if item in my_set:",n:"Sets use hashing: O(1) average. In contrast, 'if item in my_list' scans every element: O(n). This distinction costs interviews."},
+    ],
+  },
+  { notation:'O(log n)', name:'Logarithmic', bc:'#DBEAFE', bt:'#1D4ED8',
+    scale:'Grows extremely slowly. log₂(1,000,000) ≈ 20.',
+    n:{'10':'3','100':'7','1,000':'10','1,000,000':'20'},
+    desc:'The problem is halved at each step. After k steps, the remaining problem has size n/2^k. When that equals 1, k = log₂(n). This is why binary search only needs ~20 comparisons to search a million elements.',
+    examples:['Binary search on sorted array','BST search/insert/delete (balanced)','Heap push/pop','Binary lifting / sparse table'],
+    code:[
+      {c:'lo, hi = 0, len(arr) - 1',n:'Start with the full search space.'},
+      {c:'while lo <= hi:',n:'Loop runs O(log n) times — each iteration halves the space.'},
+      {c:'    mid = lo + (hi - lo) // 2',n:'Use this form to avoid integer overflow (good habit, matters in other languages).'},
+      {c:'    if arr[mid] == target: return mid',n:'Found — done in O(1) this iteration.'},
+      {c:'    elif arr[mid] < target: lo = mid + 1',n:'Target is in the right half — discard left half including mid.'},
+      {c:'    else: hi = mid - 1',n:'Target is in the left half — discard right half including mid.'},
+    ],
+  },
+  { notation:'O(n)', name:'Linear', bc:'#FEF9C3', bt:'#713F12',
+    scale:'Grows proportionally to n. 2× input → 2× time.',
+    n:{'10':'10','100':'100','1,000':'1,000','1,000,000':'1,000,000'},
+    desc:'Visit or process each element a constant number of times. A single loop from 0 to n is O(n). Two sequential loops (not nested) over the same array is still O(n) — the constant 2 is dropped.',
+    examples:['Linear scan / search','Single-pass hash map build','Two pointers on sorted array','Sliding window','BFS and DFS (O(V+E))'],
+    code:[
+      {c:'total = 0',n:'Initialize accumulator — O(1).'},
+      {c:'for x in arr:',n:'n iterations — the loop itself is what makes this O(n).'},
+      {c:'    total += x',n:'O(1) work per iteration → O(1) × n = O(n) total.'},
+      {c:'# Two sequential loops: still O(n)',n:''},
+      {c:'for x in arr: process(x)',n:'O(n)'},
+      {c:'for x in arr: process_again(x)',n:'O(n) — these ADD: O(n) + O(n) = O(2n) = O(n). Constants drop.'},
+    ],
+  },
+  { notation:'O(n log n)', name:'Linearithmic', bc:'#FEF3C7', bt:'#92400E',
+    scale:'Slightly worse than linear. The most efficient comparison-based sort.',
+    n:{'10':'30','100':'700','1,000':'10,000','1,000,000':'20,000,000'},
+    desc:'Appears in: (1) divide-and-conquer algorithms that split into halves and do O(n) merge work at each level (merge sort), (2) algorithms that perform a binary search or heap operation for each of n elements. O(n log n) is the provable lower bound for comparison-based sorting.',
+    examples:['Merge sort, heap sort','Python sort() — Timsort','Building a heap via n pushes (vs O(n) heapify)','Sorting as preprocessing for a greedy algorithm'],
+    code:[
+      {c:'arr.sort()',n:"Python's Timsort: O(n log n) time, O(n) space, stable. The fastest sort for general data in Python."},
+      {c:'arr.sort(key=lambda x: x[1])',n:'Custom sort — same O(n log n). key function called O(n) times.'},
+      {c:'# Why merge sort is O(n log n):',n:''},
+      {c:'# log n levels (each split halves the array)',n:''},
+      {c:'# × O(n) merge work at each level',n:''},
+      {c:'# = O(n log n) total',n:''},
+    ],
+  },
+  { notation:'O(n²)', name:'Quadratic', bc:'#FEE2E2', bt:'#991B1B',
+    scale:'Scales poorly. 2× input → 4× time. Avoid for n > ~10,000.',
+    n:{'10':'100','100':'10,000','1,000':'1,000,000','1,000,000':'10¹²'},
+    desc:'Typically from two nested loops both running over the same input. At n=10,000, this is 100 million operations — already slow. Quadratic algorithms are a red flag in interviews; always look for an O(n) or O(n log n) approach.',
+    examples:['Bubble/selection/insertion sort','Brute-force pair finding (two sum naive)','Comparing every pair in an array','Naive string matching'],
+    code:[
+      {c:'# Brute-force two sum — O(n²)',n:'Two nested loops over the same array.'},
+      {c:'for i in range(len(nums)):',n:'Outer loop: n iterations.'},
+      {c:'    for j in range(i+1, len(nums)):',n:'Inner loop: up to n iterations for each outer step. n × n = n².'},
+      {c:'        if nums[i] + nums[j] == target:',n:'O(1) check — but done n² times in the worst case.'},
+      {c:'            return [i, j]',n:''},
+      {c:'# Optimal: hash map complement → O(n)',n:'The inner loop disappears entirely.'},
+    ],
+  },
+  { notation:'O(2ⁿ)', name:'Exponential', bc:'#EDE9FE', bt:'#5B21B6',
+    scale:'Doubles with each +1 to n. Impractical for n > ~30.',
+    n:{'10':'1,024','20':'1,048,576','30':'10⁹','40':'10¹²'},
+    desc:'Typically from recursive algorithms that make 2 (or more) calls per invocation, creating a binary recursion tree with 2^n nodes. Memoization converts O(2^n) to O(n) by eliminating recomputed subtrees. Also appears in: generating all subsets (each element is in or out).',
+    examples:['Naive Fibonacci without memoization','Generate all 2^n subsets','Backtracking without pruning','Brute-force recursive DP'],
+    code:[
+      {c:'def fib_bad(n):',n:'Without memoization — the textbook exponential example.'},
+      {c:'    if n <= 1: return n',n:'Base case — O(1).'},
+      {c:'    return fib_bad(n-1) + fib_bad(n-2)',n:'Two recursive calls per call → recursion tree has 2^n nodes. fib(40) ≈ 2^40 = 1 trillion calls.'},
+      {c:'',n:''},
+      {c:'from functools import lru_cache',n:''},
+      {c:'@lru_cache(maxsize=None)',n:'Memoize: cache each unique (n,) call result.'},
+      {c:'def fib_good(n):',n:'Same logic — radically different performance.'},
+      {c:'    if n <= 1: return n',n:''},
+      {c:'    return fib_good(n-1) + fib_good(n-2)',n:'Now each unique n computed once → O(n) time, O(n) space. Tree becomes a DAG.'},
+    ],
+  },
+  { notation:'O(n!)', name:'Factorial', bc:'#FCE7F3', bt:'#831843',
+    scale:'Explodes catastrophically. n=13 already > 6 billion.',
+    n:{'5':'120','8':'40,320','10':'3,628,800','13':'6,227,020,800'},
+    desc:'Appears when generating all permutations of n elements. Each element can go in any position (n choices for first, n-1 for second, etc.). The NP-hard Traveling Salesman Problem brute force is O(n!). In interviews, O(n!) usually means your backtracking needs pruning.',
+    examples:['Generate all n! permutations','Brute-force TSP','Exhaustive search over all orderings'],
+    code:[
+      {c:'def permutations(arr):',n:'Generate all orderings — O(n!) results, O(n) space on the call stack.'},
+      {c:'    if len(arr) <= 1: return [list(arr)]',n:'Base case.'},
+      {c:'    result = []',n:''},
+      {c:'    for i, x in enumerate(arr):',n:'n choices for the first position.'},
+      {c:'        rest = arr[:i] + arr[i+1:]',n:'Remaining n-1 elements.'},
+      {c:'        for p in permutations(rest):',n:'(n-1)! permutations of the rest.'},
+      {c:'            result.append([x] + p)',n:'n × (n-1)! = n! total.'},
+      {c:'    return result',n:''},
+    ],
+  },
+];
+
+const BIGO_RULES = [
+  { title:'1. Drop constants', body:'O(2n), O(3n), O(100n) all simplify to O(n). Big O describes growth rate, not exact count. Two sequential loops over n elements = O(2n) = O(n).', ex:'O(2n) → O(n)\nO(500) → O(1)\nO(n/2) → O(n)' },
+  { title:'2. Drop lower-order terms', body:'O(n² + n) = O(n²) because for large n, the n² term completely dominates n. Always keep only the dominant term.', ex:'O(n² + n) → O(n²)\nO(n log n + n) → O(n log n)\nO(2ⁿ + n⁵) → O(2ⁿ)' },
+  { title:'3. Different inputs = different variables', body:'If a function takes two separate arrays a and b, the complexity is O(a + b) or O(a × b) — NOT O(n). Using n for two different inputs is a common interview mistake.', ex:'def f(a, b):    # O(a + b)\n    for x in a: ...\n    for x in b: ...' },
+  { title:'4. Nested loops multiply', body:'Each additional nested loop over the same data multiplies the complexity. A loop inside a loop = O(n²). A third nested loop = O(n³). Loops over different ranges: O(n × m).', ex:'for i in range(n):      # O(n²)\n    for j in range(n):\n\nfor i in range(n):      # O(n × m)\n    for j in range(m):' },
+  { title:'5. Recursive time = tree nodes × work per node', body:'Draw the recursion tree. Count nodes (total recursive calls) and multiply by the work done at each node (excluding recursive calls). Merge sort: log n levels × O(n) merge work = O(n log n).', ex:'# Fibonacci without memo:\n# ~2^n nodes × O(1) work = O(2^n)\n\n# Merge sort:\n# log n levels × O(n) merge = O(n log n)' },
+  { title:'6. O(log n) from halving', body:'Any algorithm that reduces the problem by a constant fraction (½, ⅓, etc.) at each step is O(log n). Binary search halves the search space. Union-Find with path compression is effectively O(log n) amortized.', ex:'while n > 1:\n    n = n // 2     # O(log n) iterations\n\nwhile lo < hi:         # binary search\n    mid = (lo+hi)//2   # O(log n) iterations' },
+];
+
+const BIGO_DS = [
+  // Arrays
+  {ds:'Array', op:'Access by index', time:'O(1)', space:'O(1)', note:'Direct memory address calculation.'},
+  {ds:'Array', op:'Search (unsorted)', time:'O(n)', space:'O(1)', note:'Must scan every element.'},
+  {ds:'Array', op:'Search (sorted)', time:'O(log n)', space:'O(1)', note:'Binary search.'},
+  {ds:'Array', op:'Append to end', time:'O(1)*', space:'O(1)', note:'Amortized — occasional O(n) resize.'},
+  {ds:'Array', op:'Insert/delete (middle)', time:'O(n)', space:'O(1)', note:'Shifts all elements after position.'},
+  // Hash Map
+  {ds:'Hash Map / Set', op:'Get / set / delete', time:'O(1) avg', space:'O(1)', note:'O(n) worst case from collisions.'},
+  {ds:'Hash Map / Set', op:'Iterate all keys', time:'O(n)', space:'O(1)', note:'Must visit every bucket.'},
+  // Linked List
+  {ds:'Linked List', op:'Access by index', time:'O(n)', space:'O(1)', note:'Must walk from head.'},
+  {ds:'Linked List', op:'Insert / delete at head', time:'O(1)', space:'O(1)', note:'Just rewire the pointer.'},
+  {ds:'Linked List', op:'Insert / delete (middle)', time:'O(1) at pointer', space:'O(1)', note:'O(n) to find it first.'},
+  // Stack / Queue
+  {ds:'Stack / deque', op:'Push / pop / peek', time:'O(1)', space:'O(1)', note:'Both ends for deque.'},
+  // Heap
+  {ds:'Heap (heapq)', op:'Push / pop', time:'O(log n)', space:'O(1)', note:'Sift up / sift down.'},
+  {ds:'Heap (heapq)', op:'Peek (heap[0])', time:'O(1)', space:'O(1)', note:'Min always at index 0.'},
+  {ds:'Heap (heapq)', op:'Build from list (heapify)', time:'O(n)', space:'O(1)', note:'Faster than n pushes (O(n log n)).'},
+  // BST
+  {ds:'BST (balanced)', op:'Search / insert / delete', time:'O(log n)', space:'O(log n)', note:'h = O(log n) for balanced trees.'},
+  {ds:'BST (unbalanced)', op:'Search / insert / delete', time:'O(n)', space:'O(n)', note:'Degrades to linked list if skewed.'},
+  // Sorting
+  {ds:'Sorting', op:'Comparison sort (any)', time:'O(n log n)', space:'varies', note:'Proven lower bound. Python Timsort is stable.'},
+  {ds:'Sorting', op:'Counting / radix sort', time:'O(n + k)', space:'O(n + k)', note:'Non-comparison. k = value range.'},
+  // Graph
+  {ds:'Graph (adj. list)', op:'BFS / DFS', time:'O(V + E)', space:'O(V)', note:'V = vertices, E = edges.'},
+  {ds:'Graph (adj. list)', op:'Dijkstra (min-heap)', time:'O((V+E) log V)', space:'O(V)', note:'Only non-negative edge weights.'},
+  {ds:'Graph', op:'Topological sort', time:'O(V + E)', space:'O(V)', note:'Kahn\'s or DFS postorder.'},
+  // Union-Find
+  {ds:'Union-Find', op:'Find / union', time:'O(α(n)) ≈ O(1)', space:'O(1)', note:'α = inverse Ackermann. Effectively constant.'},
+  // Trie
+  {ds:'Trie', op:'Insert / search / prefix', time:'O(m)', space:'O(1)', note:'m = length of the key string.'},
+  // Segment Tree
+  {ds:'Segment Tree', op:'Build', time:'O(n)', space:'O(n)', note:''},
+  {ds:'Segment Tree', op:'Range query / point update', time:'O(log n)', space:'O(1)', note:''},
+];
+
+const BIGO_SPACE = [
+  { notation:'O(1)', label:'Constant space', desc:'A fixed number of variables regardless of n. Two pointers, iterative algorithms with no extra data structures. Goal for in-place algorithms.' },
+  { notation:'O(log n)', label:'Logarithmic space', desc:'The call stack of a recursive algorithm that halves the input each call. Binary search (recursive) uses O(log n) stack frames. Balanced tree recursion uses O(log n).' },
+  { notation:'O(n)', label:'Linear space', desc:'An array, hash map, set, or queue proportional to input size. Most algorithms that trade space for time (memoization, BFS queue). The most common target.' },
+  { notation:'O(h)', label:'Tree height', desc:'Recursive DFS on a tree uses O(h) stack frames. h = O(log n) for balanced tree, O(n) for skewed tree. Always state which case applies.' },
+  { notation:'O(n²)', label:'Quadratic space', desc:'A 2D DP table (m × n grid). Often reducible to O(n) with rolling array if you only need the previous row. Mention this optimization in interviews.' },
+  { notation:'O(2ⁿ)', label:'Exponential space', desc:'Storing all subsets (2^n subsets of n elements). Backtracking call stack can reach this if every path is kept. Usually impractical beyond n=20.' },
+];
+
+/* ── BigO Reference Component ─────────────────────────────── */
+function BigORef() {
+  const [openIdx, setOpenIdx] = useState(null);
+  const toggle = i => setOpenIdx(x => x === i ? null : i);
+
+  return (
+    <div style={{marginBottom:'40px'}}>
+      {/* Intro */}
+      <div style={{fontSize:'13.5px',color:'#374151',lineHeight:'1.7',marginBottom:'20px'}}>
+        Big O notation describes how the runtime (or space usage) of an algorithm <em>scales</em> as the input size n grows toward infinity. It expresses the <strong>upper bound on the growth rate</strong>, ignoring constants and lower-order terms. Two algorithms that both visit every element once are both O(n) — even if one does 3× more work per element.
+      </div>
+
+      {/* Comparison table */}
+      <div className="ref-section-title" style={{marginBottom:'10px'}}>Complexity at a Glance</div>
+      <div style={{overflowX:'auto',marginBottom:'28px'}}>
+        <table className="bigo-complexity-table">
+          <thead>
+            <tr>
+              <th>Complexity</th><th>Name</th>
+              <th>n = 10</th><th>n = 100</th><th>n = 1,000</th><th>n = 1,000,000</th>
+              <th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody>
+            {BIGO_COMPLEXITIES.map((c,i) => (
+              <tr key={c.notation}>
+                <td><span className="bigo-chip" style={{background:c.bc,color:c.bt}}>{c.notation}</span></td>
+                <td style={{fontWeight:'600',color:'#374151'}}>{c.name}</td>
+                {Object.values(c.n).map((v,j) => <td key={j}>{v}</td>)}
+                <td style={{fontSize:'11px',color:i<=1?'#059669':i<=3?'#D97706':i<=4?'#DC2626':'#7C3AED',fontWeight:'600'}}>
+                  {i===0?'Ideal':i===1?'Excellent':i===2?'Good':i===3?'Acceptable':i===4?'Slow — optimize':i===5?'Impractical':'Never brute force'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Per-complexity deep dives */}
+      <div className="ref-section-title" style={{marginBottom:'12px'}}>Each Complexity — In Depth</div>
+      <p style={{fontSize:'12.5px',color:'var(--muted)',marginBottom:'14px'}}>Click any row to expand the explanation and annotated code example.</p>
+      {BIGO_COMPLEXITIES.map((c,i) => (
+        <div key={c.notation} className="bigo-card">
+          <div className="bigo-header" onClick={() => toggle(i)}>
+            <div className="bigo-header-left">
+              <div className="bigo-title-row">
+                <span className="bigo-chip" style={{background:c.bc,color:c.bt}}>{c.notation}</span>
+                <span className="bigo-name">{c.name}</span>
+                <span className="bigo-scale">{c.scale}</span>
+              </div>
+              <div style={{display:'flex',gap:'6px',flexWrap:'wrap',marginTop:'4px'}}>
+                {c.examples.slice(0,3).map((ex,j) => (
+                  <span key={j} className="bigo-example-pill">{ex}</span>
+                ))}
+              </div>
+            </div>
+            <span className="ds-toggle">{openIdx===i?'▲':'▼'}</span>
+          </div>
+          {openIdx===i && (
+            <div className="bigo-body">
+              <div className="bigo-desc">{c.desc}</div>
+              <div className="ds-section-label">Code example</div>
+              <AnnotatedCode lines={c.code.filter(l => l.c !== '')} />
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Rules */}
+      <div className="ref-section-title" style={{margin:'28px 0 12px'}}>Rules for Simplification</div>
+      <p style={{fontSize:'12.5px',color:'var(--muted)',marginBottom:'14px'}}>Apply these in order to get the final Big O from raw analysis.</p>
+      <div className="bigo-rules-grid">
+        {BIGO_RULES.map(r => (
+          <div key={r.title} className="bigo-rule">
+            <div className="bigo-rule-title">{r.title}</div>
+            <div className="bigo-rule-body">{r.body}</div>
+            <code className="bigo-rule-example">{r.ex}</code>
+          </div>
+        ))}
+      </div>
+
+      {/* DS cheat sheet */}
+      <div className="ref-section-title" style={{margin:'28px 0 12px'}}>Data Structure + Operation Cheat Sheet</div>
+      <div style={{border:'var(--border)',borderRadius:'var(--radius)',overflow:'hidden',marginBottom:'8px'}}>
+        <table className="bigo-ds-table">
+          <thead><tr><th>Structure</th><th>Operation</th><th>Time</th><th>Space (extra)</th><th>Notes</th></tr></thead>
+          <tbody>
+            {BIGO_DS.map((row,i) => (
+              <tr key={i}>
+                <td style={{fontWeight:'600',color:'#374151'}}>{row.ds}</td>
+                <td>{row.op}</td>
+                <td style={{color: row.time.includes('O(1)')&&!row.time.includes('O(1)*')?'#059669': row.time.includes('log')?'#2563EB': row.time.includes('O(n²)')||row.time.includes('O(n!)')?'#DC2626':'#374151', fontWeight:'600'}}>{row.time}</td>
+                <td>{row.space}</td>
+                <td style={{fontSize:'11.5px',color:'var(--muted)'}}>{row.note}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Space complexity */}
+      <div className="ref-section-title" style={{margin:'28px 0 12px'}}>Space Complexity</div>
+      <p style={{fontSize:'13px',color:'#4b5563',lineHeight:'1.65',marginBottom:'14px'}}>
+        Space complexity measures <strong>auxiliary space</strong> — extra memory used beyond the input. The call stack counts: each recursive call frame uses space. Always state space complexity alongside time in interviews.
+      </p>
+      {BIGO_SPACE.map(s => (
+        <div key={s.notation} className="bigo-space-item">
+          <div className="bigo-space-row">
+            <span className="bigo-space-notation">{s.notation}</span>
+            <span style={{fontWeight:'600',color:'#374151',fontSize:'13px',marginRight:'8px'}}>{s.label}</span>
+            <span className="bigo-space-text">{s.desc}</span>
+          </div>
+        </div>
+      ))}
+
+      {/* Best/Avg/Worst */}
+      <div className="ref-section-title" style={{margin:'28px 0 12px'}}>Best / Average / Worst Case</div>
+      <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'8px'}}>
+        {[
+          {label:'Best case Ω(n)', color:'#D1FAE5', textColor:'#065F46', desc:'The minimum operations needed — usually when the algorithm gets lucky (e.g., target is the first element in linear search: Ω(1)). Rarely useful in practice.'},
+          {label:'Average case Θ(n)', color:'#FEF9C3', textColor:'#713F12', desc:'Expected performance over all inputs. Quicksort is Θ(n log n) average with a random pivot. What people usually mean when they say "O(n log n)"for quicksort.'},
+          {label:'Worst case O(n)', color:'#FEE2E2', textColor:'#991B1B', desc:'Maximum operations for any input of size n. What Big O usually refers to in interviews. Quicksort is O(n²) worst case (sorted input, bad pivot). Guarantees an upper bound — the algorithm will never be slower than this.'},
+        ].map(c => (
+          <div key={c.label} style={{display:'flex',gap:'10px',padding:'10px 14px',background:'#fff',border:'var(--border)',borderRadius:'6px',alignItems:'flex-start'}}>
+            <span style={{fontFamily:"'Fira Code',monospace",fontSize:'12px',fontWeight:'700',background:c.color,color:c.textColor,padding:'2px 8px',borderRadius:'4px',whiteSpace:'nowrap',flexShrink:0}}>{c.label}</span>
+            <span style={{fontSize:'13px',color:'#4b5563',lineHeight:'1.6'}}>{c.desc}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const PYTHON_IDIOMS = `from collections import Counter, defaultdict, deque
 import heapq
@@ -2408,7 +2738,11 @@ function Ritual() {
 function Reference() {
   return (
     <div>
-      <div className="section-title" style={{marginBottom:'24px'}}>Templates &amp; Reference</div>
+      <div className="section-title" style={{marginBottom:'6px'}}>Templates &amp; Reference</div>
+      <p style={{fontSize:'13px',color:'var(--muted)',marginBottom:'24px'}}>Big O notation, Python idioms, gotchas, and all 7 annotated templates.</p>
+
+      <div className="ref-section-title" style={{marginBottom:'14px'}}>Big O Notation — Deep Reference</div>
+      <BigORef />
 
       <div className="ref-section-title">Python Idioms</div>
       <pre className="template-code" style={{marginBottom:'28px'}}>{PYTHON_IDIOMS}</pre>
