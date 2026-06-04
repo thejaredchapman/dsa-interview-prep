@@ -1,0 +1,2849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>DS&amp;A Interview Prep — Pinterest</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --border: 1px solid #e5e5e5;
+      --radius: 8px;
+      --easy-bg: #EAF3DE; --easy-text: #27500A;
+      --med-bg: #FAEEDA; --med-text: #633806;
+      --hard-bg: #FCEBEB; --hard-text: #791F1F;
+      --pat-bg: #EEEDFE; --pat-text: #3C3489;
+      --blue: #2563EB;
+      --muted: #6b7280;
+      --code-bg: #f4f4f5;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #f9fafb; color: #111827; min-height: 100vh; }
+
+    /* ── COUNTDOWN ───────────────────────────────── */
+    .countdown-bar {
+      background: #fff; border-bottom: var(--border);
+      padding: 14px 20px; text-align: center;
+      position: sticky; top: 0; z-index: 200;
+    }
+    .countdown-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 4px; }
+    .countdown-time { font-family: 'Fira Code', monospace; font-size: clamp(18px,4vw,30px); font-weight: 600; letter-spacing: .04em; color: #111827; }
+    .countdown-msg { font-size: 13px; color: var(--muted); margin-top: 5px; font-style: italic; }
+
+    /* ── TABS ────────────────────────────────────── */
+    .tab-nav {
+      display: flex; background: #fff; border-bottom: var(--border);
+      overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+      position: sticky; top: 0; z-index: 190;
+    }
+    .tab-nav::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      padding: 12px 16px; border: none; background: transparent; cursor: pointer;
+      font-size: 13px; font-weight: 500; color: var(--muted); white-space: nowrap;
+      border-bottom: 2px solid transparent; transition: color .15s, border-color .15s;
+      font-family: inherit;
+    }
+    .tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .tab-btn:hover:not(.active) { color: #374151; }
+
+    /* ── LAYOUT ──────────────────────────────────── */
+    .container { max-width: 1160px; margin: 0 auto; padding: 24px 16px 48px; }
+    .section-title { font-size: 20px; font-weight: 700; margin-bottom: 20px; }
+
+    /* ── GENERIC CARD ────────────────────────────── */
+    .card { background: #fff; border: var(--border); border-radius: var(--radius); padding: 20px; }
+
+    /* ── GRID HELPERS ────────────────────────────── */
+    .grid-3 { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+
+    /* ── DAY PLAN ────────────────────────────────── */
+    .day-card { background: #fff; border: var(--border); border-radius: var(--radius); padding: 18px; transition: border-color .18s, background .18s; }
+    /* per-day color tokens */
+    .day-card[data-day="1"] { --dc:#EF4444; --db:#FEF2F2; }
+    .day-card[data-day="2"] { --dc:#F97316; --db:#FFF7ED; }
+    .day-card[data-day="3"] { --dc:#D97706; --db:#FFFBEB; }
+    .day-card[data-day="4"] { --dc:#10B981; --db:#ECFDF5; }
+    .day-card[data-day="5"] { --dc:#06B6D4; --db:#ECFEFF; }
+    .day-card[data-day="6"] { --dc:#8B5CF6; --db:#EEF2FF; }
+    .day-card[data-day="7"] { --dc:#A855F7; --db:#FAF5FF; }
+    .day-card[data-day="8"] { --dc:#EC4899; --db:#FDF2F8; }
+    .day-card[data-day="9"] { --dc:#F43F5E; --db:#FFF1F2; }
+    /* today */
+    .day-card.today { border: 2px solid var(--blue); background: #EFF6FF; }
+    .day-card.today .day-title { color: var(--blue); }
+    .day-card.today .day-num { color: var(--blue); }
+    /* hover — vivid per-day color, overrides today */
+    .day-card.clickable:hover { border: 2px solid var(--dc) !important; background: var(--db) !important; }
+    .day-card.clickable:hover .day-title { color: var(--dc); }
+    .day-card.clickable:hover .day-num { color: var(--dc); opacity: .75; }
+    .day-card.clickable:hover .topic-pill { background: var(--db); border: 1px solid var(--dc); color: var(--dc); }
+    .day-card.clickable:hover .sched-period { color: var(--dc); }
+    .day-card.clickable:hover .view-probs-hint { color: var(--dc); opacity: 1; }
+    /* today pulse dot */
+    @keyframes todayPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.75)} }
+    .today-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); display: inline-block; animation: todayPulse 1.8s ease-in-out infinite; flex-shrink: 0; }
+    /* day indicator banner */
+    .day-banner {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius);
+      padding: 12px 16px; margin-bottom: 20px;
+    }
+    .day-banner-label { font-size: 12px; font-weight: 700; color: var(--blue); }
+    .day-banner-title { font-size: 13px; font-weight: 600; color: #1E40AF; }
+    .day-banner-date { font-size: 12px; color: #3B82F6; }
+    .day-banner-link { margin-left: auto; padding: 5px 12px; border: 1px solid #BFDBFE; border-radius: 5px; background: #fff; cursor: pointer; font-size: 12px; font-weight: 600; color: var(--blue); font-family: inherit; }
+    .day-banner-link:hover { background: var(--blue); color: #fff; }
+    .day-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .day-num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); transition: color .18s; }
+    .day-date { font-size: 12px; color: var(--muted); }
+    .today-badge { display: flex; align-items: center; gap: 5px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; background: var(--blue); color: #fff; padding: 3px 7px; border-radius: 3px; }
+    .day-title { font-size: 15px; font-weight: 600; margin: 8px 0 10px; transition: color .18s; }
+    .topic-pills { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+    .topic-pill { background: var(--pat-bg); color: var(--pat-text); font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 100px; transition: background .18s, color .18s, border-color .18s; }
+    .schedule-list { display: flex; flex-direction: column; gap: 7px; }
+    .sched-item { display: flex; gap: 8px; font-size: 12.5px; align-items: flex-start; }
+    .sched-period { font-weight: 600; color: #374151; min-width: 72px; flex-shrink: 0; transition: color .18s; }
+    .sched-task { color: #4b5563; flex: 1; line-height: 1.4; }
+    .sched-dur { color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+    .callout { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius); padding: 16px 20px; margin-top: 24px; font-size: 13.5px; line-height: 1.65; color: #1E40AF; }
+
+    /* ── BADGES ──────────────────────────────────── */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .badge-easy { background: var(--easy-bg); color: var(--easy-text); }
+    .badge-medium { background: var(--med-bg); color: var(--med-text); }
+    .badge-hard { background: var(--hard-bg); color: var(--hard-text); }
+    .badge-pat { background: var(--pat-bg); color: var(--pat-text); }
+
+    /* ── ANNOTATED CODE ──────────────────────────── */
+    .code-pairs { display: flex; flex-direction: column; gap: 0; }
+    .code-pair { margin-bottom: 5px; }
+    .code-line-text {
+      display: block; font-family: 'Fira Code', monospace; font-size: 12px;
+      background: var(--code-bg); padding: 4px 10px; border-radius: 3px;
+      white-space: pre; overflow-x: auto;
+    }
+    .code-note { font-size: 12px; color: var(--muted); padding: 2px 10px 3px; line-height: 1.45; }
+
+    /* ── PATTERNS ────────────────────────────────── */
+    .pattern-card { background: #fff; border: var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; }
+    .pattern-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .pattern-name { font-size: 16px; font-weight: 600; }
+    .pattern-pill { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 100px; }
+    .pattern-trigger { font-size: 13px; color: var(--muted); font-style: italic; margin-bottom: 14px; }
+    .pattern-trigger strong { font-style: normal; color: #374151; }
+
+    /* ── FILTER BAR ──────────────────────────────── */
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+    .filter-btn {
+      padding: 6px 14px; border: var(--border); border-radius: 100px;
+      background: #fff; cursor: pointer; font-size: 12.5px; font-weight: 500;
+      color: #374151; transition: background .15s, color .15s, border-color .15s;
+      font-family: inherit;
+    }
+    .filter-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .filter-btn:hover:not(.active) { border-color: #9ca3af; }
+
+    /* ── FLASHCARDS ──────────────────────────────── */
+    .flashcard-area { max-width: 580px; margin: 0 auto; }
+    .flashcard-wrapper { perspective: 800px; height: 310px; cursor: pointer; user-select: none; margin-bottom: 18px; }
+    .flashcard-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .5s ease; }
+    .flashcard-inner.flipped { transform: rotateY(180deg); }
+    .fc-face {
+      position: absolute; width: 100%; height: 100%;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      background: #fff; border: var(--border); border-radius: var(--radius);
+      padding: 28px 24px; display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .fc-back-face { transform: rotateY(180deg); background: #FAFBFF; }
+    .fc-label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .fc-q { font-size: 16px; font-weight: 600; line-height: 1.5; flex: 1; display: flex; align-items: center; }
+    .fc-a { font-size: 13.5px; line-height: 1.7; flex: 1; display: flex; align-items: flex-start; color: #1E40AF; padding-top: 4px; }
+    .fc-hint { font-size: 11px; color: var(--muted); text-align: center; }
+    .fc-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 8px; }
+    .nav-btn { padding: 8px 20px; border: var(--border); border-radius: 6px; background: #fff; cursor: pointer; font-size: 13.5px; font-weight: 500; font-family: inherit; }
+    .nav-btn:hover:not(:disabled) { background: #f5f5f5; }
+    .nav-btn:disabled { opacity: .35; cursor: default; }
+    .card-counter { font-family: 'Fira Code', monospace; font-size: 13px; color: var(--muted); }
+
+    /* ── PROBLEMS ────────────────────────────────── */
+    .problem-card { background: #fff; border: var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; }
+    .prob-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .prob-title { font-size: 15.5px; font-weight: 600; }
+    .prob-desc { font-size: 13.5px; color: #4b5563; margin-bottom: 16px; line-height: 1.6; }
+    .sol-tabs { display: flex; border-bottom: var(--border); margin-bottom: 14px; }
+    .sol-tab { padding: 8px 16px; border: none; background: transparent; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; font-family: inherit; }
+    .sol-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .complexity-row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    .cx-badge { font-family: 'Fira Code', monospace; font-size: 11px; background: #f3f4f6; color: #374151; padding: 3px 8px; border-radius: 4px; border: 1px solid #e5e7eb; }
+    .what-box { font-size: 13px; color: #4b5563; margin-bottom: 12px; padding: 8px 12px; background: #f9fafb; border-radius: 4px; line-height: 1.55; border-left: 3px solid #e5e7eb; }
+
+    /* ── MOCK TIMER ──────────────────────────────── */
+    .mock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 28px; }
+    .mock-card {
+      background: #fff; border: var(--border); border-radius: var(--radius);
+      padding: 14px 16px; cursor: pointer; transition: border-color .15s;
+    }
+    .mock-card.selected { border-color: var(--blue); background: #EFF6FF; }
+    .mock-card:hover:not(.selected) { border-color: #9ca3af; }
+    .mock-title { font-size: 13.5px; font-weight: 600; margin-bottom: 5px; }
+    .mock-pat { font-size: 11.5px; color: var(--muted); }
+    .timer-wrap { text-align: center; margin-bottom: 24px; }
+    .timer-disp { font-family: 'Fira Code', monospace; font-size: clamp(52px,10vw,80px); font-weight: 600; letter-spacing: .05em; color: #111827; line-height: 1; }
+    .timer-disp.warn { color: #D97706; }
+    .timer-disp.danger { color: #DC2626; }
+    .timer-alert { margin-top: 10px; font-size: 14px; font-weight: 600; color: #D97706; min-height: 22px; }
+    .timer-alert.danger { color: #DC2626; }
+    .timer-ctrls { display: flex; gap: 10px; justify-content: center; margin-bottom: 30px; }
+    .t-btn { padding: 10px 24px; border-radius: 6px; border: var(--border); cursor: pointer; font-size: 14px; font-weight: 600; background: #fff; color: #374151; font-family: inherit; }
+    .t-btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .t-btn:hover:not(.primary) { background: #f5f5f5; }
+    .protocol-card { background: #fff; border: var(--border); border-radius: var(--radius); padding: 20px; }
+    .protocol-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 14px; }
+    .p-item { display: flex; gap: 12px; margin-bottom: 10px; font-size: 13px; align-items: flex-start; }
+    .p-time { font-family: 'Fira Code', monospace; font-size: 11px; background: var(--pat-bg); color: var(--pat-text); padding: 3px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+    .p-desc { color: #4b5563; line-height: 1.5; }
+
+    /* ── TIPS ────────────────────────────────────── */
+    .tips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+    .tip-card { background: #fff; border: var(--border); border-radius: var(--radius); padding: 20px; }
+    .tip-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 14px; }
+    .tip-list { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+    .tip-list li { font-size: 13.5px; color: #374151; line-height: 1.5; padding-left: 16px; position: relative; }
+    .tip-list li::before { content: '—'; position: absolute; left: 0; color: var(--muted); }
+
+    /* ── HOME PAGE ───────────────────────────────── */
+    .home-hero { text-align: center; padding: 32px 0 24px; }
+    .home-title { font-size: clamp(22px,5vw,34px); font-weight: 700; margin-bottom: 8px; }
+    .home-sub { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
+    .home-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 32px; }
+    .home-btn { padding: 11px 20px; border-radius: 8px; border: var(--border); background: #fff; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #374151; transition: border-color .15s, color .15s; font-family: inherit; }
+    .home-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .home-btn.primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .home-btn.primary:hover { background: #1d4ed8; color: #fff; }
+    .home-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .home-stat { background: #fff; border: var(--border); border-radius: var(--radius); padding: 16px 18px; }
+    .home-stat-val { font-family: 'Fira Code', monospace; font-size: 26px; font-weight: 600; color: #111827; line-height: 1; }
+    .home-stat-label { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+    .home-today { background: #fff; border: var(--border); border-left: 3px solid var(--blue); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 24px; }
+    .home-today-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .home-today-title { font-size: 15px; font-weight: 600; }
+    .home-today-sched { display: flex; flex-direction: column; gap: 6px; }
+    /* quote */
+    .quote-card { background: #fff; border: var(--border); border-radius: var(--radius); padding: 22px 24px; margin-bottom: 24px; }
+    .quote-text { font-size: 15px; line-height: 1.65; color: #374151; font-style: italic; }
+    .quote-attr { font-size: 11px; color: var(--muted); margin-top: 8px; }
+    .quote-dots { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
+    .q-dot { width: 6px; height: 6px; border-radius: 50%; background: #e5e7eb; cursor: pointer; transition: background .15s; border: none; padding: 0; }
+    .q-dot.active { background: var(--blue); }
+
+    /* ── DAY CARD CLICKABLE ──────────────────────── */
+    .day-card.clickable { cursor: pointer; }
+    .view-probs-hint { font-size: 11px; color: var(--blue); margin-top: 10px; font-weight: 500; opacity: 0; transition: opacity .18s; }
+
+    /* ── POMODORO WIDGET ─────────────────────────── */
+    .pomo-widget {
+      position: fixed; bottom: 20px; left: 20px; z-index: 500;
+      background: #fff; border: var(--border); border-radius: 12px;
+      width: 192px; font-family: inherit;
+      box-shadow: 0 2px 16px rgba(0,0,0,.09);
+    }
+    .pomo-widget.minimized { width: 110px; }
+    .pomo-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: var(--border); }
+    .pomo-mode-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+    .pomo-mode-work { color: var(--blue); }
+    .pomo-mode-brk { color: #059669; }
+    .pomo-tog { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--muted); padding: 0; line-height: 1; }
+    .pomo-body { padding: 10px 12px 12px; }
+    .pomo-time-disp { font-family: 'Fira Code', monospace; font-size: 30px; font-weight: 600; text-align: center; margin-bottom: 4px; line-height: 1; }
+    .pomo-time-work { color: var(--blue); }
+    .pomo-time-brk { color: #059669; }
+    .pomo-time-idle { color: #111827; }
+    .pomo-sessions { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 10px; }
+    .pomo-ctrls { display: flex; gap: 5px; }
+    .pomo-btn { flex: 1; padding: 6px 4px; border-radius: 5px; border: var(--border); cursor: pointer; font-size: 11.5px; font-weight: 600; background: #fff; color: #374151; font-family: inherit; }
+    .pomo-btn.go { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .pomo-btn:hover:not(.go) { background: #f5f5f5; }
+    .pomo-mini-body { padding: 8px 10px; text-align: center; }
+    .pomo-mini-time { font-family: 'Fira Code', monospace; font-size: 20px; font-weight: 600; color: #111827; }
+    .pomo-mini-mode { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .07em; }
+
+    /* ── LEETCODE PROBLEMS ───────────────────────── */
+    .lc-section { margin-top: 14px; }
+    .lc-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; }
+    .lc-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .lc-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 10px; border: var(--border); border-radius: 5px;
+      background: #fff; cursor: pointer; font-size: 12px;
+      color: #374151; font-family: inherit; text-decoration: none;
+      transition: border-color .12s, background .12s, color .12s;
+    }
+    .lc-link:hover { border-color: #FB923C; background: #FFF7ED; color: #9A3412; }
+    .lc-num { font-family: 'Fira Code', monospace; font-size: 10.5px; color: var(--muted); }
+
+    /* ── AI FAB BUTTONS ──────────────────────────── */
+    .ai-fabs {
+      position: fixed; bottom: 20px; right: 20px; z-index: 600;
+      display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+    }
+    .ai-fab {
+      display: flex; align-items: center; gap: 7px;
+      border: none; border-radius: 100px;
+      padding: 10px 18px; cursor: pointer;
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      white-space: nowrap;
+      transition: filter .15s, transform .1s;
+    }
+    .ai-fab:hover { filter: brightness(1.12); transform: translateY(-1px); }
+    .ai-fab-gemini { background: #1a73e8; color: #fff; box-shadow: 0 2px 14px rgba(26,115,232,.35); }
+    .ai-fab-claude { background: #E8611A; color: #fff; box-shadow: 0 2px 14px rgba(232,97,26,.35); }
+    .ai-fab-chatgpt { background: #10a37f; color: #fff; box-shadow: 0 2px 14px rgba(16,163,127,.35); }
+    .ai-fab.copied  { background: #059669 !important; }
+    .ai-fab-icon { font-size: 13px; }
+    .ask-claude-inline {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 6px;
+      border: 1px solid #e5e5e5; background: #fff;
+      cursor: pointer; font-size: 12px; font-weight: 600;
+      color: #374151; font-family: inherit;
+      transition: background .1s, border-color .1s, color .1s;
+    }
+    .ask-claude-inline:hover { background: #E8611A; color: #fff; border-color: #E8611A; }
+    .ask-claude-inline.copied { background: #ECFDF5; color: #059669; border-color: #A7F3D0; }
+
+    /* ── DATA STRUCTURES / ALGORITHMS TABS ─────────── */
+    .ds-card { background: #fff; border: var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; }
+    .ds-header { display: flex; align-items: flex-start; gap: 12px; padding: 16px 18px; cursor: pointer; user-select: none; }
+    .ds-header:hover { background: #fafafa; }
+    .ds-header-left { flex: 1; min-width: 0; }
+    .ds-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap; }
+    .ds-name { font-size: 15px; font-weight: 700; color: #111827; }
+    .ds-summary { font-size: 12.5px; color: var(--muted); }
+    .ds-toggle { font-size: 11px; color: var(--muted); flex-shrink: 0; padding-top: 2px; }
+    .ds-body { padding: 0 18px 18px; border-top: var(--border); }
+    .cx-table-wrap { overflow-x: auto; border: var(--border); border-radius: 5px; margin: 14px 0; }
+    .cx-table { width: 100%; border-collapse: collapse; background: #fff; font-size: 12.5px; }
+    .cx-table th { padding: 7px 12px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); background: #f9fafb; border-bottom: var(--border); white-space: nowrap; }
+    .cx-table td { padding: 8px 12px; border-bottom: var(--border); vertical-align: top; }
+    .cx-table tr:last-child td { border-bottom: none; }
+    .cx-table td:first-child { font-weight: 600; color: #374151; }
+    .cx-table td:nth-child(2) { font-family: 'Fira Code', monospace; font-size: 11.5px; color: var(--blue); white-space: nowrap; }
+    .cx-table td:nth-child(3) { color: #4b5563; font-size: 12px; }
+    .insight-box { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 5px; padding: 10px 14px; margin: 12px 0; font-size: 13px; color: #1E40AF; line-height: 1.6; }
+    .ds-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 6px; }
+    .pill-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 2px; }
+    .pill-list-item { background: #f3f4f6; color: #374151; font-size: 11.5px; padding: 3px 9px; border-radius: 100px; }
+    .pitfall-list { display: flex; flex-direction: column; gap: 5px; }
+    .pitfall-item { font-size: 12.5px; color: #92400E; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 4px; padding: 6px 10px; line-height: 1.5; }
+    .approach-block { background: #f9fafb; border: var(--border); border-radius: 5px; padding: 12px 14px; margin-bottom: 10px; }
+    .approach-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .approach-name { font-size: 13px; font-weight: 700; color: #111827; }
+    .approach-cx { font-family: 'Fira Code', monospace; font-size: 11px; background: #fff; border: var(--border); padding: 2px 7px; border-radius: 3px; color: #374151; }
+    .approach-verdict { font-size: 11px; color: var(--muted); font-style: italic; }
+    .jump-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+    .jump-btn { padding: 5px 12px; border: var(--border); border-radius: 100px; background: #fff; cursor: pointer; font-size: 12px; font-weight: 500; color: #374151; font-family: inherit; }
+    .jump-btn:hover { background: #f5f5f5; }
+    .jump-btn.active-section { background: #111827; color: #fff; border-color: #111827; }
+
+    /* ── RITUAL ──────────────────────────────────── */
+    .ritual-step { display: flex; align-items: flex-start; gap: 16px; background: #fff; border: var(--border); border-radius: var(--radius); padding: 16px 18px; }
+    .ritual-num { font-family: 'Fira Code', monospace; font-size: 24px; font-weight: 700; color: var(--blue); min-width: 30px; line-height: 1.1; flex-shrink: 0; }
+    .ritual-name { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 4px; }
+    .ritual-desc { font-size: 13.5px; color: #4b5563; line-height: 1.6; }
+    .pattern-table-wrap { border: var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 8px; }
+    .pat-algo-table { width: 100%; border-collapse: collapse; background: #fff; }
+    .pat-algo-table th { padding: 9px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); background: #f9fafb; border-bottom: var(--border); }
+    .pat-algo-table td { padding: 9px 16px; font-size: 13px; border-bottom: var(--border); vertical-align: middle; }
+    .pat-algo-table tr:last-child td { border-bottom: none; }
+    .pat-algo-table tr:hover td { background: #fafafa; }
+    .pat-algo-table td:first-child { color: #4b5563; font-style: italic; }
+    .ref-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 12px; }
+    .template-card { background: #fff; border: var(--border); border-radius: var(--radius); padding: 18px; }
+    .template-name { font-size: 15px; font-weight: 700; color: #111827; margin-bottom: 3px; }
+    .template-sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+    .template-when { font-size: 12.5px; color: #4b5563; margin-bottom: 10px; }
+    .template-when strong { color: #374151; }
+    .template-code { font-family: 'Fira Code', monospace; font-size: 12px; background: var(--code-bg); padding: 12px 14px; border-radius: 5px; overflow-x: auto; line-height: 1.65; color: #374151; white-space: pre; display: block; margin: 0; }
+    .gotcha-item { background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 12px 16px; font-size: 13px; color: #78350F; line-height: 1.6; }
+    code.ic { font-family: 'Fira Code', monospace; font-size: 11.5px; background: #f3f4f6; padding: 1px 5px; border-radius: 3px; color: #374151; }
+
+    /* ── SIDE TIMER ──────────────────────────────── */
+    .side-timer {
+      position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+      z-index: 400; background: #fff;
+      border: var(--border); border-right: none;
+      border-radius: 10px 0 0 10px;
+      width: 68px;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 12px 0 12px;
+      box-shadow: -2px 0 14px rgba(0,0,0,.07);
+      font-family: inherit;
+      user-select: none;
+    }
+    .st-incr-btn {
+      width: 48px; padding: 6px 0; border: var(--border); border-radius: 5px;
+      background: #fff; cursor: pointer; font-size: 11px; font-weight: 700;
+      color: #374151; font-family: inherit; text-align: center;
+      transition: background .1s, color .1s;
+    }
+    .st-incr-btn:hover { background: #EFF6FF; color: var(--blue); border-color: #93c5fd; }
+    .st-incr-btn:disabled { opacity: .3; cursor: default; }
+    .st-divider { width: 36px; height: 1px; background: #f3f4f6; margin: 8px 0; }
+    .st-time {
+      font-family: 'Fira Code', monospace; font-size: 17px; font-weight: 600;
+      letter-spacing: .03em; color: #111827; line-height: 1; text-align: center;
+    }
+    .st-time.running { color: var(--blue); }
+    .st-time.done { color: #DC2626; }
+    .st-label { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 3px; margin-bottom: 8px; }
+    .st-ctrl-row { display: flex; gap: 4px; }
+    .st-ctrl {
+      width: 22px; height: 22px; border: var(--border); border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 11px; display: flex;
+      align-items: center; justify-content: center; transition: background .1s;
+    }
+    .st-ctrl:hover { background: #f5f5f5; }
+    .st-ctrl.go { background: var(--blue); color: #fff; border-color: var(--blue); font-size: 10px; }
+    @media (max-width: 640px) { .side-timer { display: none; } }
+
+    /* ── RESPONSIVE ──────────────────────────────── */
+    @media (max-width: 640px) {
+      .tab-btn { padding: 10px 10px; font-size: 11.5px; }
+      .grid-3, .grid-2 { grid-template-columns: 1fr; }
+      .tips-grid { grid-template-columns: 1fr; }
+      .mock-grid { grid-template-columns: 1fr 1fr; }
+      .code-line-text { font-size: 11px; }
+    }
+    @media (max-width: 380px) {
+      .mock-grid { grid-template-columns: 1fr; }
+      .fc-q { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+/* ═══════════════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════════════ */
+
+const INTERVIEW_DATE = new Date('2026-06-12T23:30:00Z'); // 3:30 PM PST = UTC-8
+
+const DAYS = [
+  { num:1, date:'Jun 3', title:'Arrays + Two Pointers', topics:['Two pointers','Hash maps','Sets'],
+    schedule:[{p:'Morning',t:'Two pointers concept + template',d:'1.5h'},{p:'Midday',t:'3 array problems',d:'1.5h'},{p:'Afternoon',t:'Hash map problems',d:'1h'},{p:'Evening',t:'Flashcard drill — arrays',d:'30m'}] },
+  { num:2, date:'Jun 4', title:'Sliding Window', topics:['Fixed window','Variable window','Hash map combo'],
+    schedule:[{p:'Morning',t:'Fixed + variable window templates',d:'1h'},{p:'Midday',t:'3 sliding window problems',d:'2h'},{p:'Afternoon',t:'Review mistakes',d:'1h'},{p:'Evening',t:'Flashcard drill — arrays',d:'30m'}] },
+  { num:3, date:'Jun 5', title:'Binary Trees', topics:['DFS','Inorder/preorder/postorder','Recursion'],
+    schedule:[{p:'Morning',t:'Tree traversal patterns',d:'1.5h'},{p:'Midday',t:'3 tree problems',d:'1.5h'},{p:'Afternoon',t:'BFS intro',d:'1h'},{p:'Evening',t:'Flashcard drill — trees',d:'30m'}] },
+  { num:4, date:'Jun 6', title:'BFS + Graphs', topics:['BFS queue','DFS grid','Connected components'],
+    schedule:[{p:'Morning',t:'BFS template + level order',d:'1h'},{p:'Midday',t:'Graph problems',d:'2h'},{p:'Afternoon',t:'Islands-style problems',d:'1h'},{p:'Evening',t:'Flashcard drill — graphs',d:'30m'}] },
+  { num:5, date:'Jun 7', title:'Stack + Linked Lists', topics:['Monotonic stack','Fast/slow pointers','Linked list ops'],
+    schedule:[{p:'Morning',t:'Stack patterns',d:'1h'},{p:'Midday',t:'3 stack/linked list problems',d:'2h'},{p:'Afternoon',t:'First mock (45m timed)',d:'1h'},{p:'Evening',t:'Review mock + flashcards',d:'45m'}] },
+  { num:6, date:'Jun 8', title:'Dynamic Programming', topics:['Memoization','Bottom-up DP','Classic patterns'],
+    schedule:[{p:'Morning',t:'DP concept + memoization',d:'1.5h'},{p:'Midday',t:'3 DP problems',d:'2h'},{p:'Afternoon',t:'Review + retry',d:'1h'},{p:'Evening',t:'Flashcard drill — DP',d:'30m'}] },
+  { num:7, date:'Jun 9', title:'Mixed Mock Day', topics:['Full mock x2','Any pattern','Weak spot review'],
+    schedule:[{p:'Morning',t:'2 full timed mocks',d:'1.5h'},{p:'Midday',t:'Review both solutions',d:'1h'},{p:'Afternoon',t:'Drill your weakest pattern',d:'1.5h'},{p:'Evening',t:'All flashcards pass',d:'30m'}] },
+  { num:8, date:'Jun 10', title:'Pattern Review + Edge Cases', topics:['All patterns','Edge case checklist','Complexity review'],
+    schedule:[{p:'Morning',t:'Revisit all 6 pattern templates',d:'1.5h'},{p:'Midday',t:'One problem per pattern',d:'2h'},{p:'Afternoon',t:'Big O drills, no code',d:'1h'},{p:'Evening',t:'Light review only',d:'30m'}] },
+  { num:9, date:'Jun 11', title:'Final Prep + Rest', topics:['One mock only','Mental prep','Early rest'],
+    schedule:[{p:'Morning',t:'One timed mock, review',d:'1.5h'},{p:'Midday',t:'Read back through templates',d:'45m'},{p:'Afternoon',t:'Walk away from the laptop',d:'—'},{p:'Evening',t:'Sleep early — 8hrs matters',d:'—'}] },
+];
+
+const PATTERNS = [
+  { name:'Two Pointers', pill:'#DBEAFE', pillText:'#1D4ED8',
+    trigger:'"find pair", "sorted array", "palindrome", "remove duplicates"',
+    lines:[
+      {c:'def two_pointer(arr):',n:'Standard setup for sorted array problems.'},
+      {c:'    left, right = 0, len(arr) - 1',n:'One pointer at each end.'},
+      {c:'    while left < right:',n:'Stop when they meet — every pair checked.'},
+      {c:'        if condition_met(arr[left], arr[right]):',n:'Found valid pair.'},
+      {c:'            return [left, right]',n:'Return indices or values.'},
+      {c:'        elif arr[left] + arr[right] < target:',n:'Sum too small — move left right.'},
+      {c:'            left += 1',n:'Increases the smaller value.'},
+      {c:'        else:',n:'Sum too large.'},
+      {c:'            right -= 1',n:'Decreases the larger value.'},
+    ]},
+  { name:'Sliding Window', pill:'#D1FAE5', pillText:'#065F46',
+    trigger:'"longest/shortest substring", "subarray of size k", "window with constraint"',
+    lines:[
+      {c:'def sliding_window(arr):',n:'Variable window template — most common form.'},
+      {c:'    left = 0',n:'Left pointer starts at beginning, only moves right.'},
+      {c:'    best = 0',n:'Track best window measurement seen.'},
+      {c:'    state = {}  # or counter, sum, etc.',n:'Window state — depends on problem.'},
+      {c:'    for right in range(len(arr)):',n:'Expand window rightward every iteration.'},
+      {c:'        # add arr[right] to state',n:'Update state with new right element.'},
+      {c:'        while <window invalid>:',n:'Shrink from left until valid. O(n) total — each element enters/exits once.'},
+      {c:'            # remove arr[left] from state',n:'Undo left element from state.'},
+      {c:'            left += 1',n:'Advance left pointer.'},
+      {c:'        best = max(best, right - left + 1)',n:'Valid window — update best. right-left+1 is window size.'},
+      {c:'    return best',n:'Return best measurement.'},
+    ]},
+  { name:'BFS', pill:'#FEF9C3', pillText:'#713F12',
+    trigger:'"level order", "shortest path", "nearest node", "connect components"',
+    lines:[
+      {c:'from collections import deque',n:'deque gives O(1) popleft(). A list would be O(n).'},
+      {c:'def bfs(root):',n:'BFS on a tree. For graphs, add a visited set.'},
+      {c:'    if not root: return []',n:'Edge case: empty input.'},
+      {c:'    q = deque([root])',n:'Seed the queue with the starting node.'},
+      {c:'    while q:',n:'Keep going until no nodes left.'},
+      {c:'        node = q.popleft()',n:'Process front of queue (oldest = shallowest node).'},
+      {c:'        # process node',n:'Record value, check condition, etc.'},
+      {c:'        for neighbor in node.neighbors:',n:'For trees: node.left, node.right. Graphs: adjacency list.'},
+      {c:'            if neighbor not in visited:',n:'Skip visited nodes in graphs.'},
+      {c:'                q.append(neighbor)',n:'Enqueue for future processing.'},
+    ]},
+  { name:'DFS', pill:'#FCE7F3', pillText:'#831843',
+    trigger:'"path exists", "all paths", "connected components", "cycle detection"',
+    lines:[
+      {c:'def dfs(node, visited=None):',n:'Recursive DFS. visited prevents revisiting in graphs.'},
+      {c:'    if visited is None: visited = set()',n:'Initialize on first call only.'},
+      {c:'    if node in visited: return',n:'Already seen — stop.'},
+      {c:'    visited.add(node)',n:'Mark as visited before recursing.'},
+      {c:'    # process node',n:'Do whatever the problem requires.'},
+      {c:'    for neighbor in node.neighbors:',n:'Explore all unvisited neighbors.'},
+      {c:'        dfs(neighbor, visited)',n:'Recurse. Call stack IS the stack.'},
+    ]},
+  { name:'Hash Map', pill:'#FEE2E2', pillText:'#991B1B',
+    trigger:'"count frequency", "find duplicate", "group by", "two sum style"',
+    lines:[
+      {c:'def hash_map_pattern(arr):',n:'General hash map template.'},
+      {c:'    from collections import defaultdict',n:'Avoids KeyError on first access.'},
+      {c:'    counts = defaultdict(int)',n:'Counting: missing keys default to 0.'},
+      {c:'    groups = defaultdict(list)',n:'Grouping: missing keys default to [].'},
+      {c:'    for item in arr:',n:'Single pass through data.'},
+      {c:'        counts[item] += 1',n:'Count occurrences. First access auto-initializes to 0.'},
+      {c:'        groups[key(item)].append(item)',n:'Group by computed key.'},
+      {c:'    return dict(counts), dict(groups)',n:'Return results.'},
+    ]},
+  { name:'Binary Search', pill:'#E0E7FF', pillText:'#3730A3',
+    trigger:'"sorted array", "find target", "minimum/maximum satisfying condition"',
+    lines:[
+      {c:'def binary_search(arr, target):',n:'Classic binary search.'},
+      {c:'    left, right = 0, len(arr) - 1',n:'Search the entire array initially.'},
+      {c:'    while left <= right:',n:'<= not < — must check single-element case.'},
+      {c:'        mid = left + (right - left) // 2',n:'Avoids integer overflow. Good habit.'},
+      {c:'        if arr[mid] == target:',n:'Found it.'},
+      {c:'            return mid',n:'Return index.'},
+      {c:'        elif arr[mid] < target:',n:'Target in right half.'},
+      {c:'            left = mid + 1',n:'Eliminate left half including mid.'},
+      {c:'        else:',n:'Target in left half.'},
+      {c:'            right = mid - 1',n:'Eliminate right half including mid.'},
+      {c:'    return -1',n:'Not found.'},
+    ]},
+  { name:'Dynamic Programming', pill:'#F3F4F6', pillText:'#374151',
+    trigger:'"minimum/maximum", "how many ways", "can you reach", overlapping subproblems',
+    lines:[
+      {c:'def dp_bottomup(n):',n:'Bottom-up DP — build from base cases.'},
+      {c:'    dp = [0] * (n + 1)',n:'dp[i] = answer for subproblem of size i.'},
+      {c:'    dp[0] = base_case_0',n:'Set base cases explicitly.'},
+      {c:'    dp[1] = base_case_1',n:'Often 0 or 1 depending on problem.'},
+      {c:'    for i in range(2, n + 1):',n:'Fill each cell using prior values.'},
+      {c:'        dp[i] = f(dp[i-1], dp[i-2])',n:'Recurrence relation — derive from the problem definition.'},
+      {c:'    return dp[n]',n:'Answer for the full problem.'},
+    ]},
+];
+
+const FLASHCARDS = [
+  {q:'What is the time complexity of a hash map lookup?',a:'O(1) average. Worst case O(n) due to hash collisions.',tag:'arrays',label:'Hashing'},
+  {q:'What is the two-pointer technique?',a:'Two pointers (often opposite ends) move toward each other. Use for: pairs in sorted arrays, palindrome checks, removing duplicates in-place.',tag:'arrays',label:'Arrays'},
+  {q:'Explain the sliding window pattern.',a:'Maintain window [left, right]. Expand right every step. Shrink left when window violates constraint. O(n) — each element enters and exits exactly once.',tag:'arrays',label:'Arrays'},
+  {q:'What are the three tree traversal orders?',a:'Inorder (L→root→R): sorted BST output. Preorder (root→L→R): copy tree. Postorder (L→R→root): delete tree.',tag:'trees',label:'Trees'},
+  {q:'BFS vs DFS — when do you use each?',a:'BFS: shortest path, level-by-level, nearest neighbor. DFS: detect cycles, topological sort, exhaustive search, deep solutions.',tag:'trees',label:'Trees'},
+  {q:'What data structure does BFS use? DFS?',a:'BFS uses a queue (FIFO). DFS uses a stack (LIFO) — explicit or call stack via recursion.',tag:'graphs',label:'Graphs'},
+  {q:'How do you detect a cycle in a linked list?',a:"Floyd's cycle detection: fast pointer 2 steps, slow 1 step. If they meet, cycle exists. O(n) time, O(1) space.",tag:'misc',label:'Linked Lists'},
+  {q:'What is memoization?',a:'Caching results of function calls to avoid recomputation. Converts O(2^n) naive recursion to O(n). Top-down DP.',tag:'dp',label:'DP'},
+  {q:'Stack vs queue — what are they used for?',a:'Stack: LIFO (DFS, undo, balanced parentheses). Queue: FIFO (BFS, scheduling, level-order traversal).',tag:'misc',label:'Data Structures'},
+  {q:'How do you find the k-th largest element?',a:'Sort O(n log n). Min-heap of size k O(n log k). Quickselect avg O(n).',tag:'arrays',label:'Arrays'},
+  {q:'What is a binary search tree?',a:'Left subtree values < node, right > node. Search/insert/delete O(h) — O(log n) if balanced.',tag:'trees',label:'Trees'},
+  {q:'What is the top-K frequent elements pattern?',a:'Count with hash map. Use min-heap of size k. Or bucket sort by frequency O(n).',tag:'arrays',label:'Hashing'},
+  {q:'Space complexity of DFS vs BFS on a tree?',a:'DFS: O(h) — stack depth = height. BFS: O(w) — queue holds one level. Both worst case O(n).',tag:'graphs',label:'Complexity'},
+  {q:'How do you reverse a linked list in-place?',a:'Three pointers: prev, curr, next. Rewire curr.next = prev each step. O(n) time, O(1) space.',tag:'misc',label:'Linked Lists'},
+  {q:'What is topological sort?',a:'Linear ordering where for every edge u→v, u comes before v. For task scheduling, build systems. Valid only on DAGs.',tag:'graphs',label:'Graphs'},
+  {q:'What triggers a sliding window vs two pointers?',a:'Sliding window: "longest/shortest subarray/substring with constraint." Two pointers: "pair in sorted array", "palindrome", "remove duplicates."',tag:'arrays',label:'Pattern ID'},
+  {q:'What is the Fibonacci DP recurrence?',a:'dp[i] = dp[i-1] + dp[i-2]. Base cases: dp[0]=0, dp[1]=1. O(n) time, O(1) space if only last two values kept.',tag:'dp',label:'DP'},
+  {q:'How does binary search work?',a:'Repeatedly halve the search space. Compare mid to target: equal=return, less=search right, more=search left. O(log n) time, O(1) space.',tag:'arrays',label:'Binary Search'},
+  {q:'What is a monotonic stack?',a:'Stack maintaining sorted order (increasing or decreasing). Pop elements that violate the order. Used for: next greater element, largest rectangle, trapping rain water.',tag:'misc',label:'Stack'},
+  {q:'When do you use defaultdict vs regular dict?',a:'defaultdict when you need a default value on first access (list, int, set). Regular dict when missing keys should raise KeyError.',tag:'misc',label:'Python'},
+];
+
+const PROBLEMS = [
+  { id:1, day:1, title:'Two Sum', diff:'easy', pat:'hash map', tags:['easy','arrays'],
+    desc:'Given an array of integers and a target, return indices of two numbers that add up to the target.',
+    brute:{ time:'O(n²)', space:'O(1)', what:'Check every pair. Two nested loops.',
+      lines:[
+        {c:'def two_sum_brute(nums, target):',n:'Define function.'},
+        {c:'    for i in range(len(nums)):',n:'Outer loop: pick first number.'},
+        {c:'        for j in range(i + 1, len(nums)):',n:'Inner loop: pick second. Start after i to avoid reuse.'},
+        {c:'            if nums[i] + nums[j] == target:',n:'Does this pair hit the target?'},
+        {c:'                return [i, j]',n:'Return both indices.'},
+      ]},
+    optimal:{ time:'O(n)', space:'O(n)', what:'Hash map stores numbers seen so far. For each number, check if its complement (target-n) is already in the map.',
+      lines:[
+        {c:'def two_sum(nums, target):',n:'Same signature.'},
+        {c:'    seen = {}',n:'Hash map: {number: index}.'},
+        {c:'    for i, n in enumerate(nums):',n:'enumerate gives both index and value.'},
+        {c:'        diff = target - n',n:'What number do we need to complete the pair?'},
+        {c:'        if diff in seen:',n:'Have we seen the complement?'},
+        {c:'            return [seen[diff], i]',n:'Yes — return its index and current index i.'},
+        {c:'        seen[n] = i',n:'Store this number for future lookups.'},
+        {c:'    return []',n:'No pair found.'},
+      ]},
+  },
+  { id:2, day:5, title:'Valid Parentheses', diff:'easy', pat:'stack', tags:['easy'],
+    desc:"Given a string of brackets ()[]{}', return true if all brackets close in correct order.",
+    brute:{ time:'O(n²)', space:'O(n)', what:'Repeatedly remove adjacent matched pairs until none remain. Empty = valid.',
+      lines:[
+        {c:'def is_valid_brute(s):',n:'Takes bracket string.'},
+        {c:"    while '()' in s or '[]' in s or '{}' in s:",n:'Keep looping while any matched pair exists.'},
+        {c:"        s = s.replace('()','').replace('[]','').replace('{}','')",n:'Remove one layer each iteration.'},
+        {c:"    return s == ''",n:'Empty = fully matched.'},
+      ]},
+    optimal:{ time:'O(n)', space:'O(n)', what:"Stack. Push openers. When closer seen, check top of stack is its matching opener.",
+      lines:[
+        {c:'def is_valid(s):',n:'Takes bracket string.'},
+        {c:'    stack = []',n:'Holds unmatched opening brackets.'},
+        {c:"    match = {')':'(', ']':'[', '}':'{'}",n:'Lookup: closing → its opener.'},
+        {c:'    for c in s:',n:'Walk each character.'},
+        {c:"        if c in '([{':",n:'Opening bracket.'},
+        {c:'            stack.append(c)',n:'Push it.'},
+        {c:'        elif not stack or stack[-1] != match[c]:',n:'Closing: stack empty or top is wrong.'},
+        {c:'            return False',n:'Invalid.'},
+        {c:'        else:',n:'Top matched.'},
+        {c:'            stack.pop()',n:'Pop the matched opener.'},
+        {c:'    return not stack',n:'Empty stack = all matched.'},
+      ]},
+  },
+  { id:3, day:6, title:'Maximum Subarray', diff:'medium', pat:'dynamic programming', tags:['medium','dp'],
+    desc:'Find the contiguous subarray with the largest sum. Array may contain negatives.',
+    brute:{ time:'O(n²)', space:'O(1)', what:'Try every subarray, compute each sum, track the maximum.',
+      lines:[
+        {c:'def max_subarray_brute(nums):',n:'Takes integers.'},
+        {c:"    max_sum = float('-inf')",n:'Negative infinity so any real sum beats it.'},
+        {c:'    for i in range(len(nums)):',n:'Try every start.'},
+        {c:'        curr = 0',n:'Reset sum for each start.'},
+        {c:'        for j in range(i, len(nums)):',n:'Extend subarray one element at a time.'},
+        {c:'            curr += nums[j]',n:'Add next element.'},
+        {c:'            max_sum = max(max_sum, curr)',n:'Update best.'},
+        {c:'    return max_sum',n:'Return largest sum.'},
+      ]},
+    optimal:{ time:'O(n)', space:'O(1)', what:"Kadane's. At each step: extend the current subarray or start fresh. Whichever is larger.",
+      lines:[
+        {c:'def max_subarray(nums):',n:'Takes integers.'},
+        {c:'    max_sum = curr = nums[0]',n:'Both start at first element. Handles all-negative arrays.'},
+        {c:'    for n in nums[1:]:',n:'Walk remaining elements.'},
+        {c:'        curr = max(n, curr + n)',n:'Extend (curr+n) or restart (n)? Extending only wins if curr is positive.'},
+        {c:'        max_sum = max(max_sum, curr)',n:'Update global best.'},
+        {c:'    return max_sum',n:'Return answer.'},
+      ]},
+  },
+  { id:4, day:2, title:'Longest Substring Without Repeating Chars', diff:'medium', pat:'sliding window', tags:['medium','arrays'],
+    desc:'Given a string, return the length of the longest substring with no repeating characters.',
+    brute:{ time:'O(n³)', space:'O(n)', what:'Try every substring. Check if all chars are unique via a set. Track longest valid.',
+      lines:[
+        {c:'def length_brute(s):',n:'Takes string.'},
+        {c:'    max_len = 0',n:'Track longest.'},
+        {c:'    for i in range(len(s)):',n:'Try every start.'},
+        {c:'        for j in range(i+1, len(s)+1):',n:'Try every end.'},
+        {c:'            sub = s[i:j]',n:'Extract substring.'},
+        {c:'            if len(set(sub)) == len(sub):',n:'Set removes dupes — unchanged length means all unique.'},
+        {c:'                max_len = max(max_len, len(sub))',n:'Valid — update best.'},
+        {c:'    return max_len',n:'Return answer.'},
+      ]},
+    optimal:{ time:'O(n)', space:'O(min(n,alphabet))', what:'Variable window + hash map. Store last seen index. When repeat found, jump left directly past the previous occurrence.',
+      lines:[
+        {c:'def length_of_longest(s):',n:'Takes string.'},
+        {c:'    seen = {}',n:'char → most recent index.'},
+        {c:'    left = max_len = 0',n:'Window start and answer.'},
+        {c:'    for right, c in enumerate(s):',n:'right expands every step.'},
+        {c:'        if c in seen and seen[c] >= left:',n:'Char is inside current window.'},
+        {c:'            left = seen[c] + 1',n:'Jump left past the duplicate. O(1) — no while loop needed.'},
+        {c:'        seen[c] = right',n:'Update last seen.'},
+        {c:'        max_len = max(max_len, right - left + 1)',n:'Update best window size.'},
+        {c:'    return max_len',n:'Return answer.'},
+      ]},
+  },
+  { id:5, day:3, title:'Binary Tree Level Order Traversal', diff:'medium', pat:'BFS', tags:['medium','trees'],
+    desc:"Return a binary tree's node values grouped by level.",
+    brute:{ time:'O(n)', space:'O(n)', what:'Recursive DFS with depth parameter. Append each node to a list indexed by depth.',
+      lines:[
+        {c:'def level_order_dfs(root):',n:'Takes root.'},
+        {c:'    res = []',n:'One list per level.'},
+        {c:'    def dfs(node, depth):',n:'Inner helper with depth.'},
+        {c:'        if not node: return',n:'Base case.'},
+        {c:'        if depth == len(res):',n:'First time at this depth.'},
+        {c:'            res.append([])',n:'Create bucket for this level.'},
+        {c:'        res[depth].append(node.val)',n:'Add value to its level.'},
+        {c:'        dfs(node.left, depth+1)',n:'Recurse left.'},
+        {c:'        dfs(node.right, depth+1)',n:'Recurse right.'},
+        {c:'    dfs(root, 0)',n:'Kick off at depth 0.'},
+        {c:'    return res',n:'Return results.'},
+      ]},
+    optimal:{ time:'O(n)', space:'O(n)', what:"BFS. Snapshot queue size at start of each level — that's exactly how many nodes to process before moving to the next level.",
+      lines:[
+        {c:'from collections import deque',n:'O(1) popleft.'},
+        {c:'def level_order(root):',n:'Takes root.'},
+        {c:'    if not root: return []',n:'Empty tree.'},
+        {c:'    res, q = [], deque([root])',n:'Result + queue seeded with root.'},
+        {c:'    while q:',n:'Process until empty.'},
+        {c:'        level = []',n:'Fresh list for this level.'},
+        {c:'        for _ in range(len(q)):',n:'KEY: snapshot size = nodes on this level.'},
+        {c:'            node = q.popleft()',n:'Remove front node.'},
+        {c:'            level.append(node.val)',n:'Record value.'},
+        {c:'            if node.left: q.append(node.left)',n:'Enqueue left child.'},
+        {c:'            if node.right: q.append(node.right)',n:'Enqueue right child.'},
+        {c:'        res.append(level)',n:'Finalize this level.'},
+        {c:'    return res',n:'Return full traversal.'},
+      ]},
+  },
+  { id:6, day:4, title:'Number of Islands', diff:'medium', pat:'DFS flood fill', tags:['medium','graphs'],
+    desc:"Given a 2D grid of '1's and '0's, count the number of islands.",
+    brute:{ time:'O(m×n)', space:'O(m×n)', what:'BFS version. Same complexity as DFS but with explicit queue.',
+      lines:[
+        {c:'from collections import deque',n:'Need deque for BFS.'},
+        {c:'def num_islands_bfs(grid):',n:'Modifies in-place.'},
+        {c:'    count = 0',n:'Island counter.'},
+        {c:'    for r in range(len(grid)):',n:'Walk rows.'},
+        {c:'        for c in range(len(grid[0])):',n:'Walk columns.'},
+        {c:"            if grid[r][c] == '1':",n:'Unvisited land.'},
+        {c:'                count += 1',n:'New island.'},
+        {c:'                q = deque([(r,c)])',n:'Start BFS.'},
+        {c:"                grid[r][c] = '0'",n:'Mark visited.'},
+        {c:'                while q:',n:'Process island.'},
+        {c:'                    row,col = q.popleft()',n:'Next cell.'},
+        {c:'                    for dr,dc in [(1,0),(-1,0),(0,1),(0,-1)]:',n:'4 neighbors.'},
+        {c:'                        nr,nc = row+dr,col+dc',n:'Neighbor coords.'},
+        {c:"                        if 0<=nr<len(grid) and 0<=nc<len(grid[0]) and grid[nr][nc]=='1':",n:'Valid unvisited land.'},
+        {c:"                            q.append((nr,nc)); grid[nr][nc]='0'",n:'Enqueue and mark.'},
+        {c:'    return count',n:'Return total.'},
+      ]},
+    optimal:{ time:'O(m×n)', space:'O(m×n)', what:'DFS flood fill. When we find land, DFS sinks the entire connected island by marking cells \'0\'. Each flood fill = one island.',
+      lines:[
+        {c:'def num_islands(grid):',n:'Takes 2D grid.'},
+        {c:'    count = 0',n:'Counter.'},
+        {c:'    def dfs(r, c):',n:'Sinks island at (r,c).'},
+        {c:"        if r<0 or c<0 or r>=len(grid) or c>=len(grid[0]) or grid[r][c]!='1':",n:'Out of bounds or water.'},
+        {c:'            return',n:'Base case.'},
+        {c:"        grid[r][c] = '0'",n:'Mark visited.'},
+        {c:'        for dr,dc in [(1,0),(-1,0),(0,1),(0,-1)]:',n:'4 neighbors.'},
+        {c:'            dfs(r+dr, c+dc)',n:'Recurse. Boundary check handles OOB.'},
+        {c:'    for r in range(len(grid)):',n:'Scan rows.'},
+        {c:'        for c in range(len(grid[0])):',n:'Scan cols.'},
+        {c:"            if grid[r][c]=='1':",n:'New island.'},
+        {c:'                dfs(r,c); count+=1',n:'Sink it, count it.'},
+        {c:'    return count',n:'Total.'},
+      ]},
+  },
+  { id:7, day:6, title:'Coin Change', diff:'medium', pat:'bottom-up DP', tags:['medium','dp'],
+    desc:'Given coin denominations and a target amount, return minimum coins needed. Return -1 if impossible.',
+    brute:{ time:'O(amount^coins)', space:'O(amount)', what:'Recursive — try every coin at every step. No memoization, recomputes same subproblems.',
+      lines:[
+        {c:'def coin_change_brute(coins, amount):',n:'Takes coins and target.'},
+        {c:'    def helper(rem):',n:'Min coins to make rem.'},
+        {c:"        if rem < 0: return float('inf')",n:'Overshot — invalid.'},
+        {c:'        if rem == 0: return 0',n:'Exact change.'},
+        {c:"        min_c = float('inf')",n:'Best over all coin choices.'},
+        {c:'        for c in coins:',n:'Try every denomination.'},
+        {c:'            res = helper(rem - c)',n:'Recurse.'},
+        {c:'            min_c = min(min_c, res + 1)',n:'This coin + rest.'},
+        {c:'        return min_c',n:'Best for this subproblem.'},
+        {c:'    r = helper(amount)',n:'Solve full.'},
+        {c:"    return r if r != float('inf') else -1",n:'Infinity = impossible.'},
+      ]},
+    optimal:{ time:'O(amount×coins)', space:'O(amount)', what:'Bottom-up DP. dp[a] = min coins for amount a. Fill from 0 to target using prior computed values.',
+      lines:[
+        {c:'def coin_change(coins, amount):',n:'Takes coins and target.'},
+        {c:"    dp = [float('inf')] * (amount + 1)",n:'All infinity = not yet achievable.'},
+        {c:'    dp[0] = 0',n:'Base case: 0 coins for amount 0.'},
+        {c:'    for a in range(1, amount + 1):',n:'Fill each amount 1..target.'},
+        {c:'        for c in coins:',n:'Try every coin.'},
+        {c:'            if a - c >= 0:',n:"Don't go negative."},
+        {c:'                dp[a] = min(dp[a], 1 + dp[a-c])',n:'1 coin + min for remainder.'},
+        {c:"    return dp[amount] if dp[amount] != float('inf') else -1",n:'Infinity = impossible.'},
+      ]},
+  },
+  { id:8, day:8, title:'Merge Intervals', diff:'medium', pat:'sort + greedy', tags:['medium','arrays'],
+    desc:'Given an array of intervals [start, end], merge all overlapping intervals.',
+    brute:{ time:'O(n²)', space:'O(n)', what:'Compare every interval pair. Merge overlapping ones and restart. Repeat until clean pass.',
+      lines:[
+        {c:'def merge_brute(intervals):',n:'Takes interval list.'},
+        {c:'    changed = True',n:'Did we merge anything?'},
+        {c:'    while changed:',n:'Keep scanning until no merges.'},
+        {c:'        changed = False',n:'Assume clean.'},
+        {c:'        for i in range(len(intervals)):',n:'Pick interval.'},
+        {c:'            for j in range(i+1, len(intervals)):',n:'Compare with every other.'},
+        {c:'                a,b = intervals[i], intervals[j]',n:'Two intervals.'},
+        {c:'                if a[0] <= b[1] and b[0] <= a[1]:',n:'Overlap condition.'},
+        {c:'                    intervals[i] = [min(a[0],b[0]), max(a[1],b[1])]',n:'Merge.'},
+        {c:'                    intervals.pop(j)',n:'Remove absorbed interval.'},
+        {c:'                    changed = True; break',n:'Rescan needed.'},
+        {c:'    return intervals',n:'Fully merged.'},
+      ]},
+    optimal:{ time:'O(n log n)', space:'O(n)', what:'Sort by start. Scan once. Extend last merged interval if overlap. Otherwise add new.',
+      lines:[
+        {c:'def merge(intervals):',n:'Takes interval list.'},
+        {c:'    intervals.sort(key=lambda x: x[0])',n:'Sort by start. Overlaps now always adjacent.'},
+        {c:'    merged = [intervals[0]]',n:'Seed with first interval.'},
+        {c:'    for start, end in intervals[1:]:',n:'Walk remaining.'},
+        {c:'        if start <= merged[-1][1]:',n:'Overlaps last merged?'},
+        {c:'            merged[-1][1] = max(merged[-1][1], end)',n:'Extend end. max() handles fully-contained intervals.'},
+        {c:'        else:',n:'No overlap.'},
+        {c:'            merged.append([start, end])',n:'New interval.'},
+        {c:'    return merged',n:'Merged list.'},
+      ]},
+  },
+  { id:9, day:1, title:'Valid Palindrome', diff:'easy', pat:'two pointers', tags:['easy','arrays'],
+    desc:'Return true if the string is a palindrome considering only alphanumeric characters, ignoring case.',
+    brute:{ time:'O(n)', space:'O(n)', what:'Clean the string (alphanumeric only, lowercase), then compare to its reverse.',
+      lines:[
+        {c:'def is_palindrome_brute(s):',n:'Takes string.'},
+        {c:'    cleaned = ""',n:'Will hold filtered chars.'},
+        {c:'    for c in s:',n:'Walk every char.'},
+        {c:'        if c.isalnum():',n:'Letters and digits only.'},
+        {c:'            cleaned += c.lower()',n:'Lowercase and add.'},
+        {c:'    return cleaned == cleaned[::-1]',n:'[::-1] reverses. Compare to original.'},
+      ]},
+    optimal:{ time:'O(n)', space:'O(1)', what:'Two pointers from opposite ends. Skip non-alphanumeric. Compare matching positions. No extra string.',
+      lines:[
+        {c:'def is_palindrome(s):',n:'Takes string.'},
+        {c:'    left, right = 0, len(s) - 1',n:'Opposite ends.'},
+        {c:'    while left < right:',n:'Until they meet.'},
+        {c:'        while left < right and not s[left].isalnum():',n:'Skip non-alnum from left.'},
+        {c:'            left += 1',n:'Advance.'},
+        {c:'        while left < right and not s[right].isalnum():',n:'Skip non-alnum from right.'},
+        {c:'            right -= 1',n:'Move back.'},
+        {c:'        if s[left].lower() != s[right].lower():',n:'Compare (case-insensitive).'},
+        {c:'            return False',n:'Mismatch.'},
+        {c:'        left += 1; right -= 1',n:'Both matched — move inward.'},
+        {c:'    return True',n:'No mismatch found.'},
+      ]},
+  },
+  { id:10, day:8, title:'Group Anagrams', diff:'medium', pat:'hash map + sorting', tags:['medium','arrays'],
+    desc:'Given an array of strings, group anagrams together and return all groups.',
+    brute:{ time:'O(n² × k log k)', space:'O(n)', what:'For every pair, sort both and compare. Group matches. Slow due to pairwise comparisons.',
+      lines:[
+        {c:'def group_anagrams_brute(strs):',n:'Takes string list.'},
+        {c:'    groups = []',n:'Groups found so far.'},
+        {c:'    used = set()',n:'Tracks already-grouped indices.'},
+        {c:'    for i in range(len(strs)):',n:'Pick a string to start a group.'},
+        {c:'        if i in used: continue',n:'Already grouped.'},
+        {c:'        group = [strs[i]]',n:'Start new group.'},
+        {c:'        for j in range(i+1, len(strs)):',n:'Compare with every other.'},
+        {c:'            if sorted(strs[i]) == sorted(strs[j]):',n:'Same sorted chars = anagrams.'},
+        {c:'                group.append(strs[j])',n:'Add to group.'},
+        {c:'                used.add(j)',n:'Mark grouped.'},
+        {c:'        groups.append(group)',n:'Finalize.'},
+        {c:'    return groups',n:'Return all groups.'},
+      ]},
+    optimal:{ time:'O(n × k log k)', space:'O(n)', what:'Hash map keyed by sorted characters. Anagrams always produce the same key. One pass.',
+      lines:[
+        {c:'from collections import defaultdict',n:'Auto-creates empty list on first access.'},
+        {c:'def group_anagrams(strs):',n:'Takes string list.'},
+        {c:'    groups = defaultdict(list)',n:'sorted_word → [anagram list].'},
+        {c:'    for word in strs:',n:'Walk every word once.'},
+        {c:'        key = tuple(sorted(word))',n:'Sort chars — anagrams produce identical keys. tuple() is hashable, list is not.'},
+        {c:'        groups[key].append(word)',n:'Add to its group. defaultdict handles new keys automatically.'},
+        {c:'    return list(groups.values())',n:'Return all groups.'},
+      ]},
+  },
+];
+
+const TIPS = [
+  { title:'Time Management', items:[
+    '0–5 min: clarify everything, ask questions',
+    '5–10 min: brute force out loud, state complexity',
+    '10–30 min: code the optimized solution',
+    '30–40 min: trace examples, fix bugs',
+    '40–45 min: Big O + edge case discussion',
+  ]},
+  { title:'Communication', items:[
+    'Never go silent — narrate your thinking always',
+    '"Let me think for a second" is completely fine',
+    'State assumptions explicitly before coding',
+    'Call out what you\'d test and why',
+    'If stuck: say what you know, ask for a nudge',
+  ]},
+  { title:'Common Traps', items:[
+    'Off-by-one errors in loops and slices',
+    'Forgetting empty array / single element edge case',
+    'Mutating input without asking if that\'s okay',
+    'Assuming sorted input when it isn\'t stated',
+    'Forgetting negative numbers or duplicates',
+  ]},
+  { title:'Pattern Triggers', items:[
+    '"Find pair / subarray" → two pointers or hash map',
+    '"Contiguous subarray / window" → sliding window',
+    '"Tree traversal / level order" → BFS with queue',
+    '"Shortest path" → BFS (unweighted)',
+    '"Optimize overlapping subproblems" → DP',
+  ]},
+];
+
+const RITUAL_STEPS = [
+  { num:1, name:'Restate', desc:'Say the problem back in your own words before touching the keyboard. Full sentence, out loud.' },
+  { num:2, name:'Clarify', desc:'Input size? Sorted? Duplicates? Negatives? Empty? What to return if no answer? Say: "Let me ask a few clarifying questions."' },
+  { num:3, name:'Example', desc:'Walk one concrete input → output by hand. Write it in the editor. Do NOT skip this.' },
+  { num:4, name:'Brute Force', desc:"State the naive O(n²) or O(2ⁿ) solution. Don't skip — it proves you understand the problem before you optimize." },
+  { num:5, name:'Optimize', desc:"Name the pattern out loud: 'This looks like a sliding window / hash map complement / BFS shortest path.' State the better Big-O." },
+  { num:6, name:'Code', desc:"Narrate every line as you type. Clean variable names. No tricks. If you get stuck, say what you're thinking." },
+  { num:7, name:'Verify', desc:'Trace your code with the example. Then test: empty input, single element, duplicates, negatives, max values.' },
+  { num:8, name:'Complexity', desc:"State time and space complexity unprompted: 'This is O(n) time and O(n) space because the hash map grows with input.'" },
+];
+
+const PATTERN_ALGO = [
+  { when:'Sorted array + find pair',           reach:'Two Pointers' },
+  { when:'Max/min of fixed-size window',       reach:'Sliding Window (fixed)' },
+  { when:'Longest substring with constraint',  reach:'Sliding Window (variable)' },
+  { when:'Shortest path, unweighted',          reach:'BFS' },
+  { when:'Connected components, all paths',    reach:'DFS' },
+  { when:'Sorted array + O(log n) find',       reach:'Binary Search' },
+  { when:'All combinations summing to X',      reach:'Backtracking' },
+  { when:'Prefix matching / autocomplete',     reach:'Trie' },
+  { when:'Repeated min/max from stream',       reach:'Heap (heapq)' },
+  { when:'Pair summing to target',             reach:'Hash Map complement' },
+  { when:'Overlapping subproblems',            reach:'DP (memo or tabulation)' },
+  { when:'Order of tasks / cycle detection',   reach:'Topological Sort (DFS)' },
+];
+
+const BRIEF_TEMPLATES = [
+  { name:'Two Pointers', sub:'Sorted array, pair finding',
+    code:`left, right = 0, len(arr) - 1\nwhile left < right:\n    s = arr[left] + arr[right]\n    if s == target: return [left, right]\n    elif s < target: left += 1\n    else: right -= 1` },
+  { name:'Sliding Window (Fixed)', sub:'Max/min of every k-size window',
+    code:`window = sum(arr[:k])\nbest = window\nfor i in range(k, len(arr)):\n    window += arr[i] - arr[i-k]\n    best = max(best, window)` },
+  { name:'Sliding Window (Variable)', sub:'Longest valid substring',
+    code:`seen, left, best = set(), 0, 0\nfor right in range(len(s)):\n    while s[right] in seen:\n        seen.remove(s[left]); left += 1\n    seen.add(s[right])\n    best = max(best, right - left + 1)` },
+  { name:'BFS', sub:'Shortest path, level-by-level',
+    code:`from collections import deque\nqueue = deque([start]); visited = {start}\nwhile queue:\n    node = queue.popleft()\n    for nb in graph[node]:\n        if nb not in visited:\n            visited.add(nb); queue.append(nb)` },
+  { name:'DFS (Iterative)', sub:'Connectivity, cycle detection',
+    code:`stack = [start]; visited = set()\nwhile stack:\n    node = stack.pop()\n    if node not in visited:\n        visited.add(node)\n        for nb in graph[node]: stack.append(nb)` },
+  { name:'Binary Search', sub:'Sorted array, O(log n) find',
+    code:`left, right = 0, len(nums) - 1\nwhile left <= right:\n    mid = left + (right - left) // 2\n    if nums[mid] == target: return mid\n    elif nums[mid] < target: left = mid + 1\n    else: right = mid - 1` },
+  { name:'Backtracking', sub:'All combinations/permutations',
+    code:`def backtrack(start, current, remaining):\n    if remaining == 0:\n        results.append(list(current)); return\n    for i in range(start, len(candidates)):\n        current.append(candidates[i])\n        backtrack(i, current, remaining - candidates[i])\n        current.pop()` },
+];
+
+const PYTHON_IDIOMS = `from collections import Counter, defaultdict, deque
+import heapq
+
+Counter(iterable)              # frequency map — Counter("aab") → {'a':2,'b':1}
+defaultdict(int)               # dict that auto-creates 0 for missing keys
+defaultdict(list)              # dict that auto-creates [] — use for grouping
+d.get(key, default)            # safe lookup — no KeyError
+deque()                        # O(1) popleft()/appendleft() — ALWAYS use for BFS
+heapq.heappush(h, x)           # insert into min-heap
+heapq.heappop(h)               # remove and return smallest
+heapq.heappush(h, -x)          # simulate max-heap by negating
+float('inf')                   # useful sentinel for min/max tracking
+s.isalnum(); s.lower()         # clean string for palindrome checks
+''.join(chars)                 # build string from list
+x in some_set                  # O(1) — sets and dicts only. x in list is O(n)!`;
+
+const GOTCHAS = [
+  ['list.pop(0)', 'is O(n) — shifts every element. Use ', 'deque.popleft()', ' which is O(1).'],
+  ['x in list', 'is O(n). Python scans every element. Use a ', 'set', ' or ', 'dict', ' for O(1) lookup.'],
+  ['Default recursion limit is ~1000.', ' Mention this for deep trees. Use iterative DFS or ', 'sys.setrecursionlimit()', '.'],
+  ['Python has no integer overflow.', ' Say this out loud on sum problems — it\'s a free signal of Python fluency.'],
+];
+
+const DETAIL_TEMPLATES = [
+  { name:'Template 1: Two Pointers', when:'sorted array, find pair summing to target',
+    code:`l, r = 0, len(arr) - 1\nwhile l < r:\n    if CONDITION:\n        pass               # found the answer\n    elif NEED_BIGGER:\n        l += 1             # move left right to increase sum\n    else:\n        r -= 1             # move right left to decrease sum` },
+  { name:'Template 2: Sliding Window (variable)', when:'longest/shortest substring with a constraint',
+    code:`left, seen, best = 0, set(), 0\nfor right in range(len(s)):\n    while s[right] in seen:       # duplicate entered — shrink from left\n        seen.remove(s[left])\n        left += 1\n    seen.add(s[right])\n    best = max(best, right - left + 1)\nreturn best` },
+  { name:'Template 3: Binary Search', when:'sorted array, search space that halves each step',
+    code:`lo, hi = 0, len(arr) - 1\nwhile lo <= hi:\n    mid = (lo + hi) // 2\n    if arr[mid] == target:\n        return mid\n    elif arr[mid] < target:\n        lo = mid + 1              # target in right half\n    else:\n        hi = mid - 1              # target in left half\nreturn -1` },
+  { name:'Template 4: Fast / Slow Pointers', when:'linked list cycle, middle of list',
+    code:`slow = fast = head\nwhile fast and fast.next:         # fast needs 2 valid nodes to move 2 steps\n    slow, fast = slow.next, fast.next.next\n    if slow is fast:\n        return True               # cycle confirmed\nreturn False` },
+  { name:'Template 5: Stack Matching', when:'bracket matching, expression parsing',
+    code:`pairs = {')': '(', ']': '[', '}': '{'}\nstack = []\nfor ch in s:\n    if ch in pairs:               # closing bracket\n        if not stack or stack.pop() != pairs[ch]:\n            return False\n    else:\n        stack.append(ch)          # opening bracket\nreturn not stack` },
+  { name:'Template 6: BFS on a Grid', when:'shortest path on grid, count connected components',
+    code:`from collections import deque\nq = deque([start])\nvisited = {start}\nsteps = 0\nwhile q:\n    for _ in range(len(q)):       # process one entire level\n        r, c = q.popleft()\n        for dr, dc in ((0,1),(0,-1),(1,0),(-1,0)):\n            nr, nc = r+dr, c+dc\n            if 0<=nr<rows and 0<=nc<cols and (nr,nc) not in visited:\n                visited.add((nr,nc)); q.append((nr,nc))\n    steps += 1` },
+  { name:'Template 7: DFS + Tree Height', when:'graph connectivity, tree measurements',
+    code:`def dfs(node, visited):\n    if node in visited: return\n    visited.add(node)\n    for nei in graph[node]:\n        dfs(nei, visited)\n\ndef height(node):\n    if not node: return 0\n    return 1 + max(height(node.left), height(node.right))` },
+];
+
+const DS_DATA = [
+  { name:'Array', badge:'Linear', bc:'#DBEAFE', bt:'#1D4ED8',
+    summary:'Contiguous memory, O(1) index access',
+    ops:[
+      { op:'Access by index', time:'O(1)', note:'Direct memory address calculation — free.' },
+      { op:'Append to end', time:'O(1)*', note:'Amortized. Doubles capacity on resize — rare O(n).' },
+      { op:'Insert / delete (middle)', time:'O(n)', note:'Shifts every element after the target.' },
+      { op:'Search (unsorted)', time:'O(n)', note:'Linear scan — no shortcut.' },
+      { op:'Search (sorted)', time:'O(log n)', note:'Binary search — only works if sorted.' },
+      { op:'Slice s[i:j]', time:'O(k)', note:'Copies k elements — not free!' },
+    ],
+    insight:'Python list is a dynamic array. list.pop(0) is O(n) because it shifts everything left — always use collections.deque for O(1) removes from the front. Slicing creates a copy; know the cost.',
+    patterns:['Two pointers on sorted array','Sliding window over contiguous range','Prefix sum for range queries','Binary search on sorted data','Kadane\'s (max subarray)'],
+    pitfalls:['list.pop(0) → O(n). Use deque.popleft()','s[i:j] copies — assign it if you reuse it','Modifying a list while iterating causes skipped elements','Off-by-one: range(len(a)-1) vs range(len(a))'],
+    code:[
+      { c:'# Prefix sum — answer range sum queries in O(1)', n:'Build once in O(n), answer each query O(1).' },
+      { c:'prefix = [0] * (len(nums) + 1)', n:'Length n+1 so prefix[0] = 0 (empty prefix).' },
+      { c:'for i, n in enumerate(nums):', n:'Single pass to build the array.' },
+      { c:'    prefix[i+1] = prefix[i] + n', n:'prefix[i] = sum of nums[0..i-1].' },
+      { c:'range_sum = prefix[j+1] - prefix[i]', n:'Sum of nums[i..j] inclusive, O(1).' },
+    ],
+  },
+  { name:'Hash Map / Hash Set', badge:'Hash', bc:'#D1FAE5', bt:'#065F46',
+    summary:'O(1) average lookup, insert, delete',
+    ops:[
+      { op:'Get / contains', time:'O(1) avg', note:'Hash function → direct bucket. O(n) worst case (all collisions).' },
+      { op:'Set / add', time:'O(1) avg', note:'Same hash → bucket. Resize happens at load factor.' },
+      { op:'Delete', time:'O(1) avg', note:'Find bucket, remove entry.' },
+      { op:'Iterate all keys', time:'O(n)', note:'Must visit every bucket.' },
+    ],
+    insight:'Use a set when you only need membership (O(1) "is x in here?"). Use a dict when you need a value. defaultdict(int) for counting, defaultdict(list) for grouping. Counter is a dict subclass with convenience methods.',
+    patterns:['Two sum complement (store seen values)','Frequency counting','Grouping (anagram grouping, group by key)','Sliding window with char counts','Memoization cache'],
+    pitfalls:['x in list is O(n). x in set is O(1) — convert first','Unhashable types (list, dict) cannot be keys — use tuple','Counter subtracts go negative — check for that','Two separate dicts don\'t share state'],
+    code:[
+      { c:'from collections import defaultdict, Counter', n:'Both are dict subclasses — all dict ops work.' },
+      { c:'counts = Counter("aabbbcc")', n:'{"b":3,"a":2,"c":2} — most_common() gives sorted.' },
+      { c:'groups = defaultdict(list)', n:'Missing key → empty list automatically created.' },
+      { c:'for word in words:', n:'Single pass groups all anagrams.' },
+      { c:'    groups[tuple(sorted(word))].append(word)', n:'Sorted tuple is the canonical anagram key.' },
+      { c:'seen = {}', n:'Two-sum pattern: store {value: index}.' },
+      { c:'for i, n in enumerate(nums):', n:'One pass — check before storing.' },
+      { c:'    if target - n in seen: return [seen[target-n], i]', n:'Complement already stored → found the pair.' },
+      { c:'    seen[n] = i', n:'Store after checking to avoid using same element twice.' },
+    ],
+  },
+  { name:'Linked List', badge:'Linear', bc:'#FEF9C3', bt:'#713F12',
+    summary:'O(1) insert/delete at pointer, O(n) access',
+    ops:[
+      { op:'Access by index', time:'O(n)', note:'Must walk from head — no index math.' },
+      { op:'Insert at head', time:'O(1)', note:'New node.next = head; head = new node.' },
+      { op:'Insert at tail (with tail ptr)', time:'O(1)', note:'Keep tail pointer. Without it: O(n).' },
+      { op:'Delete at known pointer', time:'O(1)', note:'Rewire prev.next = curr.next.' },
+      { op:'Search', time:'O(n)', note:'Linear scan from head.' },
+    ],
+    insight:'Linked lists rarely appear directly — you\'ll see them in Node class problems. The critical patterns are fast/slow pointers (detect cycle, find middle) and reversing in-place. Python has no built-in linked list, but deque is implemented as a doubly-linked list.',
+    patterns:['Fast/slow pointers → cycle, midpoint, kth from end','Reverse in-place','Merge two sorted lists (two pointers)','Dummy head node (simplifies edge cases at head)'],
+    pitfalls:['Forgetting to check fast.next and fast.next.next before advancing fast','Losing the reference to head when reversing','Off-by-one on "kth from end" (n+1 advance)'],
+    code:[
+      { c:'# Reverse a linked list — classic in-place O(n) O(1)', n:'Three pointers, single pass.' },
+      { c:'prev, curr = None, head', n:'prev trails behind; curr is the node being re-wired.' },
+      { c:'while curr:', n:'Until we fall off the end.' },
+      { c:'    nxt = curr.next', n:'Save next before we overwrite it.' },
+      { c:'    curr.next = prev', n:'Flip the pointer.' },
+      { c:'    prev, curr = curr, nxt', n:'Advance both pointers.' },
+      { c:'return prev', n:'prev is now the new head.' },
+      { c:'', n:'' },
+      { c:'# Floyd cycle detection — O(n) O(1)', n:'Fast pointer laps slow if a cycle exists.' },
+      { c:'slow = fast = head', n:'Both start at head.' },
+      { c:'while fast and fast.next:', n:'fast needs two valid nodes each step.' },
+      { c:'    slow, fast = slow.next, fast.next.next', n:'Slow +1, fast +2.' },
+      { c:'    if slow is fast: return True', n:'They met → cycle confirmed.' },
+      { c:'return False', n:'fast hit None → no cycle.' },
+    ],
+  },
+  { name:'Stack', badge:'LIFO', bc:'#FCE7F3', bt:'#831843',
+    summary:'Last-in first-out, all O(1) ops',
+    ops:[
+      { op:'Push', time:'O(1)', note:'Append to top.' },
+      { op:'Pop', time:'O(1)', note:'Remove and return top.' },
+      { op:'Peek / top', time:'O(1)', note:'stack[-1] in Python.' },
+      { op:'Is empty', time:'O(1)', note:'not stack or len(stack) == 0.' },
+    ],
+    insight:'Use a list as a stack in Python — append() and pop() are O(1) from the right. The monotonic stack is the most important pattern: maintain a stack that is always increasing or decreasing. When a new element violates the order, pop until it doesn\'t. Solves next-greater-element, largest-rectangle, and trapping rain water.',
+    patterns:['Balanced parentheses / bracket matching','Monotonic stack → next greater / smaller element','DFS (explicit stack = iterative DFS)','Expression evaluation, undo history'],
+    pitfalls:['Checking stack[-1] on empty stack → IndexError. Check "not stack" first','Monotonic stack: decide increasing vs decreasing before writing'],
+    code:[
+      { c:'# Monotonic decreasing stack — next greater element', n:'For each element, pop anything smaller — they found their answer.' },
+      { c:'result = [-1] * len(nums)', n:'Default: no greater element found.' },
+      { c:'stack = []  # stores indices', n:'We store indices so we can write into result.' },
+      { c:'for i, n in enumerate(nums):', n:'Process each element.' },
+      { c:'    while stack and nums[stack[-1]] < n:', n:'n is greater than the top — pop it.' },
+      { c:'        result[stack.pop()] = n', n:'Top found its next greater element.' },
+      { c:'    stack.append(i)', n:'Push current index — unresolved so far.' },
+      { c:'# Elements left in stack have no next greater → stay -1', n:'' },
+    ],
+  },
+  { name:'Queue / Deque', badge:'FIFO', bc:'#E0E7FF', bt:'#3730A3',
+    summary:'First-in first-out, O(1) popleft with deque',
+    ops:[
+      { op:'Enqueue (append right)', time:'O(1)', note:'deque.append(x)' },
+      { op:'Dequeue (popleft)', time:'O(1)', note:'deque.popleft(). list.pop(0) is O(n)!' },
+      { op:'Append left', time:'O(1)', note:'deque.appendleft(x)' },
+      { op:'Peek front', time:'O(1)', note:'q[0]' },
+    ],
+    insight:'Always use collections.deque for BFS — never list. list.pop(0) is O(n) because it shifts every element. deque is a doubly-linked list under the hood, so both ends are O(1). A deque with maxlen acts as a sliding window max/min structure.',
+    patterns:['BFS (level-order traversal, shortest path)','Sliding window maximum (deque + monotonic)','Task scheduling'],
+    pitfalls:['list as queue → list.pop(0) is O(n). Always import deque','deque is not indexable with negative indices in older Python versions'],
+    code:[
+      { c:'from collections import deque', n:'Always import this for BFS.' },
+      { c:'q = deque([root])  # or deque([(start, 0)]) for BFS with distance', n:'Seed the queue.' },
+      { c:'visited = {root}', n:'Prevents revisiting — add to visited when enqueuing, not dequeuing.' },
+      { c:'while q:', n:'Keep going until no nodes remain.' },
+      { c:'    node = q.popleft()', n:'O(1) — this is why we use deque.' },
+      { c:'    for nb in graph[node]:', n:'Explore neighbors.' },
+      { c:'        if nb not in visited:', n:'Only unvisited neighbors.' },
+      { c:'            visited.add(nb)', n:'Mark when enqueuing — not when processing.' },
+      { c:'            q.append(nb)', n:'Add to back of queue.' },
+    ],
+  },
+  { name:'Binary Tree / BST', badge:'Tree', bc:'#DCFCE7', bt:'#14532D',
+    summary:'Hierarchical; BST gives O(log n) search when balanced',
+    ops:[
+      { op:'BST search / insert', time:'O(h)', note:'h = height. O(log n) balanced, O(n) worst (skewed).' },
+      { op:'Any traversal', time:'O(n)', note:'Must visit every node.' },
+      { op:'BFS level order', time:'O(n)', note:'Queue holds at most one full level.' },
+      { op:'Height / depth', time:'O(n)', note:'Recursive: 1 + max(height(left), height(right)).' },
+    ],
+    insight:'Inorder traversal (L→root→R) of a BST produces sorted output — that\'s the key property. If you need the kth smallest, do an iterative inorder and count. Know all three traversals iteratively (not just recursively); interviewers ask for it.',
+    patterns:['Inorder → sorted BST output, kth smallest','Level-order BFS → serialize, connect level nodes','Path sum (DFS with running total)','Diameter / height (postorder — compute bottom-up)','Validate BST (pass min/max bounds down)'],
+    pitfalls:['BST equal-to check: left < node ≤ right OR left ≤ node < right — clarify boundary','Height of null node is 0 or -1 — decide and be consistent','Iterative inorder needs careful curr/stack management'],
+    code:[
+      { c:'# All 3 traversals — iterative (no recursion limit)', n:'Know these cold for interviews.' },
+      { c:'# INORDER (sorted for BST)', n:'' },
+      { c:'stack, curr, res = [], root, []', n:'curr walks down left spine; stack holds the path.' },
+      { c:'while stack or curr:', n:'Keep going as long as there\'s work.' },
+      { c:'    while curr: stack.append(curr); curr = curr.left', n:'Go as far left as possible.' },
+      { c:'    curr = stack.pop()', n:'Process the leftmost unprocessed node.' },
+      { c:'    res.append(curr.val)', n:'Visit (between L and R).' },
+      { c:'    curr = curr.right', n:'Now explore the right subtree.' },
+      { c:'', n:'' },
+      { c:'# LEVEL ORDER (BFS)', n:'' },
+      { c:'q = deque([root])', n:'Seed with root.' },
+      { c:'while q:', n:'' },
+      { c:'    for _ in range(len(q)):  # snapshot current level size', n:'KEY: snapshot BEFORE the loop modifies q.' },
+      { c:'        node = q.popleft()', n:'Process one node from this level.' },
+      { c:'        if node.left: q.append(node.left)', n:'' },
+      { c:'        if node.right: q.append(node.right)', n:'' },
+    ],
+  },
+  { name:'Heap (Priority Queue)', badge:'Tree', bc:'#FEF3C7', bt:'#92400E',
+    summary:'O(log n) insert/extract, O(1) peek min/max',
+    ops:[
+      { op:'Push (insert)', time:'O(log n)', note:'Sift up from bottom.' },
+      { op:'Pop (extract min)', time:'O(log n)', note:'Move last to top, sift down.' },
+      { op:'Peek (min)', time:'O(1)', note:'heap[0] — always the minimum in Python.' },
+      { op:'Heapify (build from list)', time:'O(n)', note:'Better than n pushes which is O(n log n).' },
+      { op:'nlargest / nsmallest', time:'O(n log k)', note:'heapq.nlargest(k, iterable)' },
+    ],
+    insight:'Python heapq is a min-heap. For max-heap, negate all values: push -x, pop and negate the result. The classic pattern: maintain a heap of size k to find kth largest in O(n log k). Also key for merge k sorted lists and running median (two heaps: max-heap for lower half, min-heap for upper half).',
+    patterns:['Kth largest element','Top-k frequent elements','Merge k sorted lists','Running median (two heaps)','Dijkstra\'s shortest path'],
+    pitfalls:['Python heapq is always min — negate for max','heapq.nlargest(k, arr) is O(n log k) not O(k log n)','heap[0] is the minimum, but the rest of the list is NOT sorted'],
+    code:[
+      { c:'import heapq', n:'Built-in module — no install needed.' },
+      { c:'', n:'' },
+      { c:'# Min-heap: kth LARGEST in O(n log k)', n:'Maintain size-k heap of the k largest seen.' },
+      { c:'h = []', n:'Start empty.' },
+      { c:'for n in nums:', n:'Process every number once.' },
+      { c:'    heapq.heappush(h, n)', n:'O(log k) insert.' },
+      { c:'    if len(h) > k: heapq.heappop(h)', n:'Evict the smallest — heap stays = k largest.' },
+      { c:'return h[0]', n:'Minimum of the heap = kth largest overall.' },
+      { c:'', n:'' },
+      { c:'# Max-heap: negate values', n:'Python has no built-in max-heap.' },
+      { c:'heapq.heappush(h, -val)', n:'Negate on push.' },
+      { c:'max_val = -heapq.heappop(h)', n:'Negate on pop to get original value.' },
+      { c:'', n:'' },
+      { c:'# Heapify in O(n) — faster than n pushes', n:'' },
+      { c:'heapq.heapify(arr)', n:'Rearranges arr in-place into a valid heap.' },
+    ],
+  },
+  { name:'Graph', badge:'Non-Linear', bc:'#F3F4F6', bt:'#374151',
+    summary:'Nodes + edges. BFS = shortest path, DFS = connectivity',
+    ops:[
+      { op:'Build adjacency list', time:'O(V+E)', note:'Space = O(V+E). Most efficient for sparse graphs.' },
+      { op:'BFS / DFS traversal', time:'O(V+E)', note:'Visit every vertex and edge once.' },
+      { op:'Adjacency matrix lookup', time:'O(1)', note:'But O(V²) space — avoid for sparse graphs.' },
+    ],
+    insight:'Always use an adjacency list (dict of lists) unless the graph is dense or you need O(1) edge lookup. Mark nodes visited when enqueuing (BFS) or at the start of the DFS call — not when dequeuing. This prevents processing a node multiple times when multiple paths lead to it.',
+    patterns:['BFS → shortest path (unweighted)','DFS → connected components, cycle detection, all paths','Topological sort → task ordering, course prerequisites','Union-Find → connected components, cycle detection in undirected graph','Dijkstra → shortest path (weighted, non-negative edges)'],
+    pitfalls:['Mark visited when enqueuing, not dequeuing (BFS)','Directed vs undirected: undirected adds both directions','Missing visited set → infinite loop on cycles','Grid problems: check bounds (0<=r<rows and 0<=c<cols) before accessing'],
+    code:[
+      { c:'from collections import defaultdict, deque', n:'' },
+      { c:'', n:'' },
+      { c:'# Build adjacency list', n:'Standard for almost all graph problems.' },
+      { c:'graph = defaultdict(list)', n:'Missing key returns [] automatically.' },
+      { c:'for u, v in edges:', n:'Walk every edge.' },
+      { c:'    graph[u].append(v)', n:'Directed: one way only.' },
+      { c:'    graph[v].append(u)', n:'Undirected: add both directions.' },
+      { c:'', n:'' },
+      { c:'# DFS — iterative (avoids recursion limit)', n:'Equivalent to recursive DFS but safe for large graphs.' },
+      { c:'stack, visited = [start], {start}', n:'Add start to visited immediately.' },
+      { c:'while stack:', n:'Process until exhausted.' },
+      { c:'    node = stack.pop()', n:'LIFO — depth-first order.' },
+      { c:'    for nb in graph[node]:', n:'' },
+      { c:'        if nb not in visited:', n:'Only unvisited.' },
+      { c:'            visited.add(nb)', n:'Mark before pushing.' },
+      { c:'            stack.append(nb)', n:'Explore later.' },
+    ],
+  },
+  { name:'Trie (Prefix Tree)', badge:'Tree', bc:'#EDE9FE', bt:'#5B21B6',
+    summary:'O(m) insert/search where m = word length',
+    ops:[
+      { op:'Insert word', time:'O(m)', note:'Create nodes for each character not yet present.' },
+      { op:'Search word', time:'O(m)', note:'Walk all m chars; check is_end flag at last node.' },
+      { op:'Starts-with prefix', time:'O(m)', note:'Same as search but don\'t require is_end.' },
+      { op:'Space', time:'O(total chars)', note:'Each unique character in any word gets a node.' },
+    ],
+    insight:'A Trie is a tree where each path from root to a marked node spells a word. Use a dict of dicts for simplicity. The is_end flag distinguishes "a prefix that is also a complete word" from "just a prefix". Tries outperform hash maps when you need prefix matching, autocomplete, or common-prefix operations.',
+    patterns:['Autocomplete / prefix search','Word search in a grid (backtracking + Trie)','Longest common prefix','Replace words with shortest root'],
+    pitfalls:['"apple" and "app" — apple\'s path passes through app\'s is_end=True node','Space can blow up — 26 children per node if using array; use dict instead'],
+    code:[
+      { c:'class TrieNode:', n:'Each node is a letter in the tree.' },
+      { c:'    def __init__(self):', n:'' },
+      { c:'        self.children = {}  # char → TrieNode', n:'Dict is more space-efficient than 26-element array.' },
+      { c:'        self.is_end = False  # True if a word ends here', n:'' },
+      { c:'', n:'' },
+      { c:'class Trie:', n:'' },
+      { c:'    def __init__(self): self.root = TrieNode()', n:'' },
+      { c:'', n:'' },
+      { c:'    def insert(self, word):', n:'O(m) — create path for each char.' },
+      { c:'        node = self.root', n:'' },
+      { c:'        for ch in word:', n:'Walk character by character.' },
+      { c:'            if ch not in node.children:', n:'Create node if missing.' },
+      { c:'                node.children[ch] = TrieNode()', n:'' },
+      { c:'            node = node.children[ch]', n:'Move down.' },
+      { c:'        node.is_end = True', n:'Mark word completion.' },
+      { c:'', n:'' },
+      { c:'    def search(self, word):', n:'Returns True only if full word was inserted.' },
+      { c:'        node = self.root', n:'' },
+      { c:'        for ch in word:', n:'' },
+      { c:'            if ch not in node.children: return False', n:'Path broken — word not present.' },
+      { c:'            node = node.children[ch]', n:'' },
+      { c:'        return node.is_end', n:'Must end exactly here.' },
+    ],
+  },
+];
+
+const ALGO_DATA = [
+  { name:'Binary Search', badge:'Divide & Conquer', bc:'#DBEAFE', bt:'#1D4ED8',
+    summary:'O(log n) — halves search space each step',
+    when:['"sorted array"','"find target value"','"minimum k satisfying condition"','"O(log n) required"'],
+    insight:'Binary search has three forms: (1) exact value search, (2) lower bound — first position ≥ target, (3) upper bound — first position > target. The "binary search on answer" form is the hardest: define a condition function and search the answer space rather than an array.',
+    pitfalls:['lo <= hi for exact search, lo < hi for bounds — don\'t mix them','mid = lo + (hi - lo) // 2 prevents overflow (good habit even in Python)','Lower bound: condition arr[mid] < target → lo = mid+1. The symmetry is: whenever the condition fails, move lo forward.'],
+    code:[
+      { c:'# 1. Exact search', n:'Returns index or -1.' },
+      { c:'lo, hi = 0, len(arr) - 1', n:'' },
+      { c:'while lo <= hi:', n:'<= because single element must still be checked.' },
+      { c:'    mid = lo + (hi - lo) // 2', n:'Avoids overflow; same as (lo+hi)//2 in Python.' },
+      { c:'    if arr[mid] == target: return mid', n:'' },
+      { c:'    elif arr[mid] < target: lo = mid + 1', n:'Target right of mid.' },
+      { c:'    else: hi = mid - 1', n:'Target left of mid.' },
+      { c:'return -1', n:'Not found.' },
+      { c:'', n:'' },
+      { c:'# 2. Lower bound — first index where arr[i] >= target', n:'bisect_left equivalent.' },
+      { c:'lo, hi = 0, len(arr)', n:'hi = len(arr) — answer could be past the end.' },
+      { c:'while lo < hi:', n:'< not <= — converges to a single point.' },
+      { c:'    mid = (lo + hi) // 2', n:'' },
+      { c:'    if arr[mid] < target: lo = mid + 1', n:'mid is too small — discard left half including mid.' },
+      { c:'    else: hi = mid', n:'mid could be the answer — keep it in range.' },
+      { c:'return lo  # or hi — they\'re equal', n:'' },
+      { c:'', n:'' },
+      { c:'# 3. Binary search on answer space', n:'Find minimum k where condition(k) is True.' },
+      { c:'lo, hi = possible_min, possible_max', n:'Define the answer space.' },
+      { c:'while lo < hi:', n:'' },
+      { c:'    mid = (lo + hi) // 2', n:'' },
+      { c:'    if condition(mid): hi = mid', n:'mid works — maybe something smaller works too.' },
+      { c:'    else: lo = mid + 1', n:'mid doesn\'t work — need bigger.' },
+      { c:'return lo', n:'Smallest value where condition is True.' },
+    ],
+  },
+  { name:'Kth Largest / Smallest Element', badge:'Selection', bc:'#FEF9C3', bt:'#713F12',
+    summary:'Four approaches — O(n log n) → O(n)',
+    when:['"kth largest in array"','"kth smallest in BST"','"kth from stream"','"top-k elements"'],
+    insight:'There are four approaches with different trade-offs. Quickselect is optimal on average but O(n²) worst case. The min-heap approach is better when k is small or when data arrives as a stream. Know all four — interviewers may ask you to compare them.',
+    pitfalls:['kth largest is index len(nums)-k in sorted ascending order','Quickselect modifies the input array in place — ask if that\'s okay','Heap approach: min-heap of size k, not max-heap of size k','BST approach only works when tree is given — can\'t build one from unsorted array'],
+    approaches:[
+      { name:'Approach 1: Sort', time:'O(n log n)', space:'O(1)', verdict:'Simplest — use in interview if stuck',
+        code:[
+          { c:'def kth_largest(nums, k):', n:'' },
+          { c:'    nums.sort()', n:'Ascending sort. Python sort is Timsort — stable, O(n log n).' },
+          { c:'    return nums[-k]', n:'kth from end = kth largest. k=1 → last element.' },
+        ],
+      },
+      { name:'Approach 2: Min-Heap of size k', time:'O(n log k)', space:'O(k)', verdict:'Best for streams or large n, small k',
+        code:[
+          { c:'import heapq', n:'' },
+          { c:'def kth_largest(nums, k):', n:'' },
+          { c:'    h = []', n:'Min-heap of the k largest elements seen.' },
+          { c:'    for n in nums:', n:'Process each number once.' },
+          { c:'        heapq.heappush(h, n)', n:'Insert — O(log k).' },
+          { c:'        if len(h) > k:', n:'Heap grew beyond k.' },
+          { c:'            heapq.heappop(h)', n:'Evict the smallest — it can\'t be in top-k.' },
+          { c:'    return h[0]', n:'Min of heap = kth largest. O(1).' },
+        ],
+      },
+      { name:'Approach 3: Quickselect (partition)', time:'O(n) avg · O(n²) worst', space:'O(1)', verdict:'Optimal average; mention pivot randomization for safety',
+        code:[
+          { c:'def kth_largest(nums, k):', n:'' },
+          { c:'    target = len(nums) - k  # kth largest = (n-k)th smallest', n:'Convert kth largest to an index in sorted order.' },
+          { c:'    def quickselect(lo, hi):', n:'' },
+          { c:'        pivot = nums[hi]; p = lo', n:'Choose rightmost as pivot.' },
+          { c:'        for i in range(lo, hi):', n:'Partition: move elements ≤ pivot left.' },
+          { c:'            if nums[i] <= pivot:', n:'' },
+          { c:'                nums[i], nums[p] = nums[p], nums[i]; p += 1', n:'Swap smaller element to left partition.' },
+          { c:'        nums[p], nums[hi] = nums[hi], nums[p]', n:'Place pivot at its final position p.' },
+          { c:'        if p == target: return nums[p]', n:'Pivot landed on target index — done.' },
+          { c:'        elif p < target: return quickselect(p+1, hi)', n:'Target in right partition.' },
+          { c:'        else: return quickselect(lo, p-1)', n:'Target in left partition.' },
+          { c:'    return quickselect(0, len(nums)-1)', n:'O(n) average: each call halves the problem on average.' },
+        ],
+      },
+      { name:'Approach 4: Kth smallest in BST (inorder)', time:'O(h + k)', space:'O(h)', verdict:'Only when input is a BST — do not sort to build one',
+        code:[
+          { c:'def kth_smallest(root, k):', n:'Iterative inorder traversal.' },
+          { c:'    stack, count, curr = [], 0, root', n:'curr walks the left spine; stack holds the path.' },
+          { c:'    while stack or curr:', n:'Continue while unprocessed nodes exist.' },
+          { c:'        while curr:', n:'Go as far left as possible.' },
+          { c:'            stack.append(curr); curr = curr.left', n:'' },
+          { c:'        curr = stack.pop()', n:'Leftmost unprocessed node.' },
+          { c:'        count += 1', n:'This is the count-th smallest value.' },
+          { c:'        if count == k: return curr.val', n:'Found it.' },
+          { c:'        curr = curr.right', n:'Explore right subtree next.' },
+        ],
+      },
+    ],
+    code: [],
+  },
+  { name:'Two Pointers', badge:'Array', bc:'#DBEAFE', bt:'#1D4ED8',
+    summary:'O(n) — two indices scan from opposite ends or same direction',
+    when:['"sorted array"','"find pair with sum"','"palindrome check"','"remove duplicates in-place"','"3-sum"'],
+    insight:'Two variants: (1) opposite ends — pointers move toward each other (pair sum, palindrome), (2) same direction — one pointer reads, one writes (remove duplicates, partition). Opposite-ends requires sorted input. Same-direction does not.',
+    pitfalls:['Requires sorted array for opposite-ends approach — sort first if needed','while left < right, not <=, to avoid the center crossing','3-sum: fix one pointer with a loop, two-pointer the remaining'],
+    code:[
+      { c:'# Opposite ends — pair summing to target', n:'Array must be sorted.' },
+      { c:'left, right = 0, len(arr) - 1', n:'' },
+      { c:'while left < right:', n:'Stop when they meet.' },
+      { c:'    s = arr[left] + arr[right]', n:'' },
+      { c:'    if s == target: return [left, right]', n:'Found.' },
+      { c:'    elif s < target: left += 1', n:'Need bigger sum — advance left.' },
+      { c:'    else: right -= 1', n:'Need smaller sum — retreat right.' },
+      { c:'', n:'' },
+      { c:'# Same direction — remove duplicates in-place', n:'write pointer lags read pointer.' },
+      { c:'write = 1', n:'Position to write next unique value.' },
+      { c:'for read in range(1, len(nums)):', n:'read scans the whole array.' },
+      { c:'    if nums[read] != nums[read-1]:', n:'New unique value found.' },
+      { c:'        nums[write] = nums[read]; write += 1', n:'Write it and advance write.' },
+      { c:'return write', n:'First write elements are the de-duped array.' },
+    ],
+  },
+  { name:'Sliding Window', badge:'Array', bc:'#D1FAE5', bt:'#065F46',
+    summary:'O(n) — maintain a window [left, right] over contiguous elements',
+    when:['"longest/shortest subarray"','"substring with constraint"','"max/min of every k-size window"','"at most k distinct"'],
+    insight:'Two variants: (1) fixed-size — move a constant-width window with a running sum/count, (2) variable-size — expand right every step, shrink from left when window violates the constraint. The key property: each element enters and exits the window at most once, giving O(n) total.',
+    pitfalls:['Window size = right - left + 1, not right - left','State update: add arr[right] before checking validity, remove arr[left] after shrinking','For fixed window: subtract arr[i-k] when adding arr[i]'],
+    code:[
+      { c:'# Fixed window — max sum of k elements', n:'' },
+      { c:'window = sum(nums[:k]); best = window', n:'Seed with first window.' },
+      { c:'for i in range(k, len(nums)):', n:'' },
+      { c:'    window += nums[i] - nums[i-k]', n:'Add new right, remove old left. O(1) update.' },
+      { c:'    best = max(best, window)', n:'' },
+      { c:'return best', n:'' },
+      { c:'', n:'' },
+      { c:'# Variable window — longest substring without repeating chars', n:'' },
+      { c:'seen, left, best = {}, 0, 0', n:'seen maps char → last index.' },
+      { c:'for right, c in enumerate(s):', n:'Expand right every step.' },
+      { c:'    if c in seen and seen[c] >= left:', n:'Duplicate inside current window.' },
+      { c:'        left = seen[c] + 1', n:'Jump left past the duplicate — O(1), no while loop.' },
+      { c:'    seen[c] = right', n:'Update last seen index.' },
+      { c:'    best = max(best, right - left + 1)', n:'Valid window — update answer.' },
+    ],
+  },
+  { name:'Dynamic Programming', badge:'Optimization', bc:'#F3E8FF', bt:'#6B21A8',
+    summary:'Optimal substructure + overlapping subproblems → cache results',
+    when:['"minimum/maximum value"','"number of ways"','"can you reach X"','"optimal subsequence"'],
+    insight:'DP is recognizing that the problem has overlapping subproblems (same sub-calculation needed many times) and optimal substructure (global optimum built from local optima). Two approaches: top-down (memoization = recursive + cache) and bottom-up (tabulation = iterative). Bottom-up is usually faster due to no recursion overhead.',
+    pitfalls:['Identify the state: what parameters uniquely define a subproblem?','Base cases must be set correctly before filling the table','For 0/1 knapsack, iterate capacity in reverse to prevent reuse','2D DP: initialize the full grid, not just dp[0][0]'],
+    code:[
+      { c:'# 1D: House Robber — max sum, no two adjacent', n:'Classic 1D DP with O(1) space.' },
+      { c:'prev, curr = 0, 0', n:'prev = dp[i-2], curr = dp[i-1].' },
+      { c:'for n in nums:', n:'' },
+      { c:'    prev, curr = curr, max(curr, prev + n)', n:'Take n (prev+n) or skip (curr). O(1) space.' },
+      { c:'return curr', n:'' },
+      { c:'', n:'' },
+      { c:'# 0/1 Knapsack — each item used at most once', n:'Reverse iteration prevents reuse of the same item.' },
+      { c:'dp = [0] * (W + 1)  # W = capacity', n:'dp[c] = max value with capacity c.' },
+      { c:'for weight, value in items:', n:'Process each item.' },
+      { c:'    for c in range(W, weight-1, -1):', n:'Reverse! Forward iteration would reuse the item.' },
+      { c:'        dp[c] = max(dp[c], dp[c-weight] + value)', n:'Take item or skip it.' },
+      { c:'', n:'' },
+      { c:'# 2D: LCS (Longest Common Subsequence)', n:'' },
+      { c:'dp = [[0]*(len(b)+1) for _ in range(len(a)+1)]', n:'Extra row/col for the empty-string base case.' },
+      { c:'for i in range(1, len(a)+1):', n:'' },
+      { c:'    for j in range(1, len(b)+1):', n:'' },
+      { c:'        if a[i-1] == b[j-1]: dp[i][j] = dp[i-1][j-1] + 1', n:'Match: extend by 1.' },
+      { c:'        else: dp[i][j] = max(dp[i-1][j], dp[i][j-1])', n:'No match: best of skip a[i] or skip b[j].' },
+      { c:'return dp[-1][-1]', n:'' },
+    ],
+  },
+  { name:'Backtracking', badge:'Exhaustive', bc:'#FEE2E2', bt:'#991B1B',
+    summary:'Try every option, undo on failure — O(2ⁿ) or O(n!)',
+    when:['"all combinations"','"all permutations"','"all subsets"','"place N queens"','"word break"'],
+    insight:'Backtracking = DFS on a decision tree. At each node: choose an option, recurse, unchoose (undo). The undo step is what separates it from a regular DFS. Key optimization: pruning — add a condition that cuts entire branches early (e.g., if remaining < 0, stop).',
+    pitfalls:['Forgetting to undo — current.pop() must always be called after the recursive call','Append a COPY to results: results.append(list(current)), not results.append(current)','For combinations (not permutations): pass start index to avoid re-using earlier elements'],
+    code:[
+      { c:'# Combination Sum — all combos that sum to target (reuse allowed)', n:'' },
+      { c:'results = []', n:'' },
+      { c:'def backtrack(start, current, remaining):', n:'' },
+      { c:'    if remaining == 0:', n:'Hit target exactly — valid combination.' },
+      { c:'        results.append(list(current)); return', n:'Copy! current is mutable.' },
+      { c:'    if remaining < 0: return', n:'Pruning — overshot, no point continuing.' },
+      { c:'    for i in range(start, len(candidates)):', n:'start prevents re-using earlier elements.' },
+      { c:'        current.append(candidates[i])', n:'CHOOSE.' },
+      { c:'        backtrack(i, current, remaining - candidates[i])', n:'EXPLORE. i not i+1 — allows reuse.' },
+      { c:'        current.pop()', n:'UNCHOOSE — undo before next iteration.' },
+      { c:'backtrack(0, [], target)', n:'' },
+      { c:'', n:'' },
+      { c:'# Permutations of nums', n:'' },
+      { c:'def perm(current, remaining):', n:'' },
+      { c:'    if not remaining: results.append(list(current)); return', n:'' },
+      { c:'    for i in range(len(remaining)):', n:'Every element in remaining can go next.' },
+      { c:'        current.append(remaining[i])', n:'' },
+      { c:'        perm(current, remaining[:i] + remaining[i+1:])', n:'Remove used element.' },
+      { c:'        current.pop()', n:'' },
+    ],
+  },
+  { name:'Topological Sort', badge:'Graph', bc:'#ECFEFF', bt:'#155E75',
+    summary:'Order tasks so all dependencies come first — only valid on DAGs',
+    when:['"course prerequisites"','"build order"','"task scheduling"','"cycle detection in directed graph"'],
+    insight:'Two implementations: Kahn\'s (BFS-based, uses in-degree counts) and DFS-based (postorder reversal). Kahn\'s is easier to code in interviews and naturally detects cycles (if output has fewer nodes than total, a cycle exists). DFS-based produces postorder which reversed is topological.',
+    pitfalls:['Only valid on DAGs — always check for cycles (Kahn\'s does this automatically)','In-degree: count how many edges point INTO each node','Kahn\'s: start queue contains ALL nodes with in-degree 0'],
+    code:[
+      { c:"# Kahn's algorithm — BFS-based, detects cycles", n:'More common in interviews — easier to reason about.' },
+      { c:'from collections import defaultdict, deque', n:'' },
+      { c:'graph = defaultdict(list)', n:'Adjacency list.' },
+      { c:'indegree = [0] * n', n:'How many edges point into each node.' },
+      { c:'for u, v in prerequisites:', n:'u must come before v.' },
+      { c:'    graph[u].append(v); indegree[v] += 1', n:'' },
+      { c:'q = deque(i for i in range(n) if indegree[i] == 0)', n:'All nodes with no dependencies.' },
+      { c:'order = []', n:'' },
+      { c:'while q:', n:'' },
+      { c:'    node = q.popleft(); order.append(node)', n:'Process a ready node.' },
+      { c:'    for nb in graph[node]:', n:'Tell dependents this prereq is done.' },
+      { c:'        indegree[nb] -= 1', n:'' },
+      { c:'        if indegree[nb] == 0: q.append(nb)', n:'All prereqs met — now ready.' },
+      { c:'return order if len(order) == n else []', n:'len < n means a cycle exists.' },
+    ],
+  },
+  { name:'Union-Find (Disjoint Set)', badge:'Graph', bc:'#F0FDF4', bt:'#14532D',
+    summary:'O(α(n)) ≈ O(1) union and find with path compression',
+    when:['"connected components"','"detect cycle in undirected graph"','"Kruskal\'s MST"','"number of provinces/islands"'],
+    insight:'Union-Find answers "are X and Y in the same component?" in near-O(1). Two key optimizations: path compression (flatten the tree during find) and union by rank (always attach smaller tree under larger). Together they give the inverse Ackermann time complexity — effectively constant.',
+    pitfalls:['union() returns False if already connected — use this to detect cycles','find() must use the compressed version — always call self.find(), not self.parent[x]','Initialize parent[i] = i for all i — each node starts as its own root'],
+    code:[
+      { c:'class UnionFind:', n:'' },
+      { c:'    def __init__(self, n):', n:'' },
+      { c:'        self.parent = list(range(n))', n:'Each node is its own parent (root) initially.' },
+      { c:'        self.rank = [0] * n', n:'Rank ~ height. Used for union by rank.' },
+      { c:'', n:'' },
+      { c:'    def find(self, x):', n:'Find root with path compression.' },
+      { c:'        if self.parent[x] != x:', n:'Not the root.' },
+      { c:'            self.parent[x] = self.find(self.parent[x])', n:'Flatten: point directly to root.' },
+      { c:'        return self.parent[x]', n:'Return root.' },
+      { c:'', n:'' },
+      { c:'    def union(self, x, y):', n:'Merge two components.' },
+      { c:'        px, py = self.find(x), self.find(y)', n:'Get roots.' },
+      { c:'        if px == py: return False', n:'Already same component — cycle detected.' },
+      { c:'        if self.rank[px] < self.rank[py]: px, py = py, px', n:'Attach smaller under larger.' },
+      { c:'        self.parent[py] = px', n:'Merge.' },
+      { c:'        if self.rank[px] == self.rank[py]: self.rank[px] += 1', n:'Update rank if equal.' },
+      { c:'        return True', n:'Successfully merged.' },
+    ],
+  },
+];
+
+const E = 'easy', M = 'medium', H = 'hard';
+
+const DS_LEETCODE = {
+  'Array': [
+    { name:'Two Sum', num:1, diff:E, slug:'two-sum' },
+    { name:'Best Time to Buy and Sell Stock', num:121, diff:E, slug:'best-time-to-buy-and-sell-stock' },
+    { name:'Contains Duplicate', num:217, diff:E, slug:'contains-duplicate' },
+    { name:'Product of Array Except Self', num:238, diff:M, slug:'product-of-array-except-self' },
+    { name:'Maximum Subarray', num:53, diff:M, slug:'maximum-subarray' },
+    { name:'3Sum', num:15, diff:M, slug:'3sum' },
+  ],
+  'Hash Map / Hash Set': [
+    { name:'Valid Anagram', num:242, diff:E, slug:'valid-anagram' },
+    { name:'Two Sum', num:1, diff:E, slug:'two-sum' },
+    { name:'Group Anagrams', num:49, diff:M, slug:'group-anagrams' },
+    { name:'Top K Frequent Elements', num:347, diff:M, slug:'top-k-frequent-elements' },
+    { name:'Longest Consecutive Sequence', num:128, diff:M, slug:'longest-consecutive-sequence' },
+  ],
+  'Linked List': [
+    { name:'Reverse Linked List', num:206, diff:E, slug:'reverse-linked-list' },
+    { name:'Merge Two Sorted Lists', num:21, diff:E, slug:'merge-two-sorted-lists' },
+    { name:'Linked List Cycle', num:141, diff:E, slug:'linked-list-cycle' },
+    { name:'Remove Nth Node From End', num:19, diff:M, slug:'remove-nth-node-from-end-of-list' },
+    { name:'Reorder List', num:143, diff:M, slug:'reorder-list' },
+  ],
+  'Stack': [
+    { name:'Valid Parentheses', num:20, diff:E, slug:'valid-parentheses' },
+    { name:'Min Stack', num:155, diff:M, slug:'min-stack' },
+    { name:'Daily Temperatures', num:739, diff:M, slug:'daily-temperatures' },
+    { name:'Evaluate Reverse Polish Notation', num:150, diff:M, slug:'evaluate-reverse-polish-notation' },
+    { name:'Largest Rectangle in Histogram', num:84, diff:H, slug:'largest-rectangle-in-histogram' },
+    { name:'Car Fleet', num:853, diff:M, slug:'car-fleet' },
+  ],
+  'Queue / Deque': [
+    { name:'Implement Queue using Stacks', num:232, diff:E, slug:'implement-queue-using-stacks' },
+    { name:'Design Circular Queue', num:622, diff:M, slug:'design-circular-queue' },
+    { name:'Sliding Window Maximum', num:239, diff:H, slug:'sliding-window-maximum' },
+    { name:'Number of Recent Calls', num:933, diff:E, slug:'number-of-recent-calls' },
+  ],
+  'Binary Tree / BST': [
+    { name:'Maximum Depth of Binary Tree', num:104, diff:E, slug:'maximum-depth-of-binary-tree' },
+    { name:'Invert Binary Tree', num:226, diff:E, slug:'invert-binary-tree' },
+    { name:'Binary Tree Level Order Traversal', num:102, diff:M, slug:'binary-tree-level-order-traversal' },
+    { name:'Validate Binary Search Tree', num:98, diff:M, slug:'validate-binary-search-tree' },
+    { name:'Kth Smallest Element in BST', num:230, diff:M, slug:'kth-smallest-element-in-a-bst' },
+    { name:'Binary Tree Right Side View', num:199, diff:M, slug:'binary-tree-right-side-view' },
+  ],
+  'Heap (Priority Queue)': [
+    { name:'Kth Largest Element in Array', num:215, diff:M, slug:'kth-largest-element-in-an-array' },
+    { name:'Top K Frequent Elements', num:347, diff:M, slug:'top-k-frequent-elements' },
+    { name:'K Closest Points to Origin', num:973, diff:M, slug:'k-closest-points-to-origin' },
+    { name:'Task Scheduler', num:621, diff:M, slug:'task-scheduler' },
+    { name:'Find Median from Data Stream', num:295, diff:H, slug:'find-median-from-data-stream' },
+  ],
+  'Graph': [
+    { name:'Number of Islands', num:200, diff:M, slug:'number-of-islands' },
+    { name:'Clone Graph', num:133, diff:M, slug:'clone-graph' },
+    { name:'Course Schedule', num:207, diff:M, slug:'course-schedule' },
+    { name:'Pacific Atlantic Water Flow', num:417, diff:M, slug:'pacific-atlantic-water-flow' },
+    { name:'Rotting Oranges', num:994, diff:M, slug:'rotting-oranges' },
+    { name:'Word Ladder', num:127, diff:H, slug:'word-ladder' },
+  ],
+  'Trie (Prefix Tree)': [
+    { name:'Implement Trie', num:208, diff:M, slug:'implement-trie-prefix-tree' },
+    { name:'Add and Search Word', num:211, diff:M, slug:'design-add-and-search-words-data-structure' },
+    { name:'Word Search II', num:212, diff:H, slug:'word-search-ii' },
+    { name:'Replace Words', num:648, diff:M, slug:'replace-words' },
+  ],
+};
+
+const ALGO_LEETCODE = {
+  'Binary Search': [
+    { name:'Binary Search', num:704, diff:E, slug:'binary-search' },
+    { name:'Search in Rotated Sorted Array', num:33, diff:M, slug:'search-in-rotated-sorted-array' },
+    { name:'Find Minimum in Rotated Sorted Array', num:153, diff:M, slug:'find-minimum-in-rotated-sorted-array' },
+    { name:'Koko Eating Bananas', num:875, diff:M, slug:'koko-eating-bananas' },
+    { name:'Search a 2D Matrix', num:74, diff:M, slug:'search-a-2d-matrix' },
+    { name:'Median of Two Sorted Arrays', num:4, diff:H, slug:'median-of-two-sorted-arrays' },
+  ],
+  'Kth Largest / Smallest Element': [
+    { name:'Kth Largest Element in Array', num:215, diff:M, slug:'kth-largest-element-in-an-array' },
+    { name:'K Closest Points to Origin', num:973, diff:M, slug:'k-closest-points-to-origin' },
+    { name:'Top K Frequent Elements', num:347, diff:M, slug:'top-k-frequent-elements' },
+    { name:'Kth Smallest Element in BST', num:230, diff:M, slug:'kth-smallest-element-in-a-bst' },
+    { name:'Find K Pairs with Smallest Sums', num:373, diff:M, slug:'find-k-pairs-with-smallest-sums' },
+  ],
+  'Two Pointers': [
+    { name:'Valid Palindrome', num:125, diff:E, slug:'valid-palindrome' },
+    { name:'Two Sum II', num:167, diff:M, slug:'two-sum-ii-input-array-is-sorted' },
+    { name:'3Sum', num:15, diff:M, slug:'3sum' },
+    { name:'Container With Most Water', num:11, diff:M, slug:'container-with-most-water' },
+    { name:'Trapping Rain Water', num:42, diff:H, slug:'trapping-rain-water' },
+  ],
+  'Sliding Window': [
+    { name:'Best Time to Buy and Sell Stock', num:121, diff:E, slug:'best-time-to-buy-and-sell-stock' },
+    { name:'Longest Substring Without Repeating Chars', num:3, diff:M, slug:'longest-substring-without-repeating-characters' },
+    { name:'Permutation in String', num:567, diff:M, slug:'permutation-in-string' },
+    { name:'Longest Repeating Character Replacement', num:424, diff:M, slug:'longest-repeating-character-replacement' },
+    { name:'Minimum Window Substring', num:76, diff:H, slug:'minimum-window-substring' },
+  ],
+  'Dynamic Programming': [
+    { name:'Climbing Stairs', num:70, diff:E, slug:'climbing-stairs' },
+    { name:'House Robber', num:198, diff:M, slug:'house-robber' },
+    { name:'Coin Change', num:322, diff:M, slug:'coin-change' },
+    { name:'Longest Common Subsequence', num:1143, diff:M, slug:'longest-common-subsequence' },
+    { name:'Word Break', num:139, diff:M, slug:'word-break' },
+    { name:'Longest Increasing Subsequence', num:300, diff:M, slug:'longest-increasing-subsequence' },
+    { name:'Edit Distance', num:72, diff:H, slug:'edit-distance' },
+  ],
+  'Backtracking': [
+    { name:'Subsets', num:78, diff:M, slug:'subsets' },
+    { name:'Combination Sum', num:39, diff:M, slug:'combination-sum' },
+    { name:'Permutations', num:46, diff:M, slug:'permutations' },
+    { name:'Word Search', num:79, diff:M, slug:'word-search' },
+    { name:'Palindrome Partitioning', num:131, diff:M, slug:'palindrome-partitioning' },
+    { name:'N-Queens', num:51, diff:H, slug:'n-queens' },
+  ],
+  'Topological Sort': [
+    { name:'Course Schedule', num:207, diff:M, slug:'course-schedule' },
+    { name:'Course Schedule II', num:210, diff:M, slug:'course-schedule-ii' },
+    { name:'Minimum Height Trees', num:310, diff:M, slug:'minimum-height-trees' },
+    { name:'Parallel Courses', num:1136, diff:M, slug:'parallel-courses' },
+  ],
+  'Union-Find (Disjoint Set)': [
+    { name:'Redundant Connection', num:684, diff:M, slug:'redundant-connection' },
+    { name:'Number of Connected Components', num:323, diff:M, slug:'number-of-connected-components-in-an-undirected-graph' },
+    { name:'Graph Valid Tree', num:261, diff:M, slug:'graph-valid-tree' },
+    { name:'Accounts Merge', num:721, diff:M, slug:'accounts-merge' },
+    { name:'Swim in Rising Water', num:778, diff:H, slug:'swim-in-rising-water' },
+  ],
+};
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════════════════ */
+
+function getTodayDayNum() {
+  const now = new Date();
+  const yr = now.getFullYear();
+  const mon = now.getMonth(); // 0-indexed
+  const d = now.getDate();
+  const planDates = [
+    {m:5,d:3},{m:5,d:4},{m:5,d:5},{m:5,d:6},{m:5,d:7},
+    {m:5,d:8},{m:5,d:9},{m:5,d:10},{m:5,d:11},
+  ];
+  for (let i = 0; i < planDates.length; i++) {
+    if (mon === planDates[i].m && d === planDates[i].d && yr === 2026) return i + 1;
+  }
+  return null;
+}
+
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function formatCountdown(ms) {
+  if (ms <= 0) return { str:'00:00:00:00', done:true };
+  const total = Math.floor(ms / 1000);
+  const days = Math.floor(total / 86400);
+  const hrs  = Math.floor((total % 86400) / 3600);
+  const mins = Math.floor((total % 3600) / 60);
+  const secs = total % 60;
+  return { str:`${pad(days)}d ${pad(hrs)}h ${pad(mins)}m ${pad(secs)}s`, days, hrs, mins, secs, total, done:false };
+}
+
+function getCountdownMsg(info) {
+  if (!info || info.done) return 'Interview day — go get it.';
+  if (info.days >= 9) return 'Work the plan.';
+  if (info.days >= 3) return 'Focus on mocks.';
+  if (info.days >= 1) return 'One mock, then rest.';
+  return 'Stop cramming — breathe.';
+}
+
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text);
+  }
+  // file:// fallback
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  return Promise.resolve();
+}
+
+function openClaude() {
+  window.open('https://claude.ai/new', '_blank', 'noopener');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ASK CLAUDE COMPONENTS
+═══════════════════════════════════════════════════════════ */
+
+const BASE_CONTEXT = `I'm preparing for a Pinterest software engineering DS&A interview on June 12, 2026. I'm studying using a 9-day plan covering arrays, sliding window, binary trees, BFS/graphs, stacks, dynamic programming, and more.\n\n`;
+
+// Inline button — used inside problem cards
+function AskClaudeInline({ prompt }) {
+  const [state, setState] = useState('idle');
+  function go() {
+    copyText(BASE_CONTEXT + prompt).then(() => {
+      setState('copied');
+      setTimeout(() => setState('idle'), 3000);
+    });
+    openClaude();
+  }
+  return (
+    <button className={`ask-claude-inline${state==='copied'?' copied':''}`} onClick={go}>
+      <span>✦</span>
+      {state === 'copied' ? 'Prompt copied — paste in Claude' : 'Ask Claude'}
+    </button>
+  );
+}
+
+function AskClaudeFab({ activeContext }) {
+  const [copied, setCopied] = useState(false);
+  function go() {
+    const prompt = BASE_CONTEXT + (activeContext || 'I have a general question about one of the topics I\'m studying.');
+    copyText(prompt);
+    openClaude();
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }
+  return (
+    <button className={`ai-fab ai-fab-claude${copied ? ' copied' : ''}`} onClick={go}>
+      <span className="ai-fab-icon">✦</span>
+      {copied ? 'Prompt copied!' : 'Ask Claude'}
+    </button>
+  );
+}
+
+function AskGeminiFab({ activeContext }) {
+  const [copied, setCopied] = useState(false);
+  function go() {
+    const prompt = BASE_CONTEXT + (activeContext || 'I have a general question about one of the topics I\'m studying.');
+    copyText(prompt);
+    window.open('https://gemini.google.com/app', '_blank', 'noopener');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }
+  return (
+    <button className={`ai-fab ai-fab-gemini${copied ? ' copied' : ''}`} onClick={go}>
+      <span className="ai-fab-icon">✦</span>
+      {copied ? 'Prompt copied!' : 'Ask Gemini'}
+    </button>
+  );
+}
+
+function AskChatGPTFab({ activeContext }) {
+  const [copied, setCopied] = useState(false);
+  function go() {
+    const prompt = BASE_CONTEXT + (activeContext || 'I have a general question about one of the topics I\'m studying.');
+    copyText(prompt);
+    window.open('https://chatgpt.com/', '_blank', 'noopener');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  }
+  return (
+    <button className={`ai-fab ai-fab-chatgpt${copied ? ' copied' : ''}`} onClick={go}>
+      <span className="ai-fab-icon">✦</span>
+      {copied ? 'Prompt copied!' : 'Ask ChatGPT'}
+    </button>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SMALL COMPONENTS
+═══════════════════════════════════════════════════════════ */
+
+function LCProblems({ problems }) {
+  if (!problems || problems.length === 0) return null;
+  return (
+    <div className="lc-section">
+      <div className="lc-section-label">LeetCode Problems</div>
+      <div className="lc-grid">
+        {problems.map(p => (
+          <button
+            key={p.num}
+            className="lc-link"
+            onClick={() => window.open(`https://leetcode.com/problems/${p.slug}/`, '_blank', 'noopener')}
+          >
+            <span className="lc-num">#{p.num}</span>
+            <Badge diff={p.diff} />
+            <span>{p.name}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function AnnotatedCode({ lines }) {
+  return (
+    <div className="code-pairs">
+      {lines.map((l, i) => (
+        <div className="code-pair" key={i}>
+          <code className="code-line-text">{l.c}</code>
+          <div className="code-note">→ {l.n}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Badge({ diff }) {
+  const cls = diff === 'easy' ? 'badge-easy' : diff === 'medium' ? 'badge-medium' : 'badge-hard';
+  return <span className={`badge ${cls}`}>{diff}</span>;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   COUNTDOWN
+═══════════════════════════════════════════════════════════ */
+
+function Countdown() {
+  const [info, setInfo] = useState(null);
+  useEffect(() => {
+    const tick = () => setInfo(formatCountdown(INTERVIEW_DATE - new Date()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (!info) return null;
+  return (
+    <div className="countdown-bar">
+      <div className="countdown-label">Pinterest Interview · Jun 12, 2026 · 3:30 PM PST</div>
+      <div className="countdown-time">{info.done ? '00d 00h 00m 00s' : info.str}</div>
+      <div className="countdown-msg">{getCountdownMsg(info)}</div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 0: HOME
+═══════════════════════════════════════════════════════════ */
+
+function QuoteCard() {
+  const [idx, setIdx] = useState(() => Math.floor(Math.random() * QUOTES.length));
+  useEffect(() => {
+    const id = setInterval(() => setIdx(i => (i + 1) % QUOTES.length), 8000);
+    return () => clearInterval(id);
+  }, []);
+  const q = QUOTES[idx];
+  return (
+    <div className="quote-card">
+      <div className="quote-text">"{q.text}"</div>
+      <div className="quote-attr">{q.attr}</div>
+      <div className="quote-dots">
+        {QUOTES.map((_, i) => (
+          <button key={i} className={`q-dot${i===idx?' active':''}`} onClick={() => setIdx(i)} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Home({ onGoToProblems, onGoToFlashcards, onGoToMock, onGoToPlan, onGoToPatterns }) {
+  const todayNum = getTodayDayNum();
+  const today = todayNum ? DAYS.find(d => d.num === todayNum) : null;
+  const [cdInfo, setCdInfo] = useState(null);
+  useEffect(() => {
+    const tick = () => setCdInfo(formatCountdown(INTERVIEW_DATE - new Date()));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const daysLeft = cdInfo && !cdInfo.done ? cdInfo.days : 0;
+  const probsDone = PROBLEMS.filter(p => p.day && p.day < (todayNum || 1)).length;
+
+  return (
+    <div>
+      <div className="home-hero">
+        <div className="home-title">Pinterest DS&amp;A Prep</div>
+        <div style={{margin:'16px 0 6px'}}>
+          <div style={{fontFamily:"'Fira Code',monospace",fontSize:'clamp(22px,5vw,38px)',fontWeight:600,letterSpacing:'.04em',color:'#111827',lineHeight:1}}>
+            {cdInfo && !cdInfo.done ? cdInfo.str : cdInfo && cdInfo.done ? "It's time." : '—'}
+          </div>
+          <div style={{fontSize:'12px',color:'var(--muted)',marginTop:'6px',letterSpacing:'.04em'}}>
+            Pinterest Interview · Jun 12, 2026 · 3:30 PM PST
+          </div>
+          {cdInfo && !cdInfo.done && (
+            <div style={{fontSize:'13px',fontStyle:'italic',color:'#4b5563',marginTop:'6px'}}>
+              {getCountdownMsg(cdInfo)}
+            </div>
+          )}
+        </div>
+        <div style={{height:'20px'}} />
+        <div className="home-actions">
+          <button className="home-btn primary" onClick={onGoToPlan}>9-Day Plan</button>
+          {todayNum && <button className="home-btn" onClick={() => onGoToProblems(`day:${todayNum}`)}>Today's Problems</button>}
+          <button className="home-btn" onClick={onGoToFlashcards}>Flashcards</button>
+          <button className="home-btn" onClick={onGoToMock}>Mock Timer</button>
+        </div>
+      </div>
+
+      <div className="home-stats">
+        <div className="home-stat">
+          <div className="home-stat-val">{todayNum ? `Day ${todayNum}` : '—'}</div>
+          <div className="home-stat-label">Today in the plan</div>
+        </div>
+        <div className="home-stat">
+          <div className="home-stat-val">{PROBLEMS.length}</div>
+          <div className="home-stat-label">Problems in the bank</div>
+        </div>
+        <div className="home-stat">
+          <div className="home-stat-val">{PATTERNS.length}</div>
+          <div className="home-stat-label">Core patterns</div>
+        </div>
+        <div className="home-stat">
+          <div className="home-stat-val">{FLASHCARDS.length}</div>
+          <div className="home-stat-label">Flashcards</div>
+        </div>
+      </div>
+
+      {today && (
+        <div className="home-today">
+          <div className="home-today-hd">
+            <span className="today-badge"><span className="today-dot" style={{background:'#fff',width:'6px',height:'6px'}} />Today</span>
+            <span style={{fontSize:'11px',color:'var(--muted)',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.07em'}}>Day {today.num} · {today.date}</span>
+            <span className="home-today-title">{today.title}</span>
+          </div>
+          <div className="topic-pills" style={{marginBottom:'14px'}}>
+            {today.topics.map(t => <span key={t} className="topic-pill">{t}</span>)}
+          </div>
+
+          {/* Today's schedule items — each clickable */}
+          <div style={{display:'flex',flexDirection:'column',gap:'6px',marginBottom:'16px'}}>
+            {today.schedule.map((s, i) => (
+              <div key={i} className="sched-item">
+                <span className="sched-period">{s.p}</span>
+                <span className="sched-task">{s.t}</span>
+                <span className="sched-dur">{s.d}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Today's specific links */}
+          <div style={{display:'flex',flexWrap:'wrap',gap:'8px',paddingTop:'14px',borderTop:'1px solid #dbeafe'}}>
+            {PROBLEMS.filter(p => p.day === todayNum).map(p => (
+              <button key={p.id}
+                onClick={() => onGoToProblems(`day:${todayNum}`)}
+                style={{padding:'6px 12px',border:'1px solid #BFDBFE',borderRadius:'6px',background:'#EFF6FF',cursor:'pointer',fontSize:'12px',fontWeight:'600',color:' #1D4ED8',fontFamily:'inherit'}}
+              >
+                {p.title} →
+              </button>
+            ))}
+            {PATTERNS.filter(p => today.topics.some(t =>
+              p.name.toLowerCase().includes(t.toLowerCase().split('/')[0].trim()) ||
+              t.toLowerCase().includes(p.name.toLowerCase().split(' ')[0])
+            )).slice(0,2).map(p => (
+              <button key={p.name}
+                onClick={onGoToPatterns}
+                style={{padding:'6px 12px',border:'1px solid #D8B4FE',borderRadius:'6px',background:'#FAF5FF',cursor:'pointer',fontSize:'12px',fontWeight:'600',color:'#7C3AED',fontFamily:'inherit'}}
+              >
+                {p.name} pattern →
+              </button>
+            ))}
+            <button
+              onClick={onGoToFlashcards}
+              style={{padding:'6px 12px',border:'1px solid #BBF7D0',borderRadius:'6px',background:'#F0FDF4',cursor:'pointer',fontSize:'12px',fontWeight:'600',color:'#15803D',fontFamily:'inherit'}}
+            >
+              Flashcards →
+            </button>
+            <button
+              onClick={onGoToMock}
+              style={{padding:'6px 12px',border:'1px solid #FED7AA',borderRadius:'6px',background:'#FFF7ED',cursor:'pointer',fontSize:'12px',fontWeight:'600',color:'#C2410C',fontFamily:'inherit'}}
+            >
+              Mock timer →
+            </button>
+          </div>
+        </div>
+      )}
+
+      <QuoteCard />
+
+      <div style={{background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:'var(--radius)',padding:'16px 20px',fontSize:'13.5px',lineHeight:'1.65',color:'#1E40AF'}}>
+        <strong>Pinterest context:</strong> Screens lean heavily on arrays, hash maps, and trees. Expect 1–2 medium LeetCode-style problems in 45–60 minutes. They want to hear you think out loud — clarify before coding, state brute force first, then optimize. Big O is expected at the end. Python is fine.
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 1: 9-DAY PLAN
+═══════════════════════════════════════════════════════════ */
+
+function DayPlan({ onDayClick }) {
+  const todayNum = getTodayDayNum();
+  const hasDayProblems = (num) => PROBLEMS.some(p => p.day === num);
+  const todayData = todayNum ? DAYS.find(d => d.num === todayNum) : null;
+
+  return (
+    <div>
+      {todayData && (
+        <div className="day-banner">
+          <span className="today-dot" />
+          <span className="day-banner-label">Day {todayData.num} of 9</span>
+          <span style={{color:'#94a3b8'}}>—</span>
+          <span className="day-banner-title">{todayData.title}</span>
+          <span className="day-banner-date">{todayData.date}</span>
+          {hasDayProblems(todayData.num) && (
+            <button className="day-banner-link" onClick={() => onDayClick(todayData.num)}>
+              {PROBLEMS.filter(p => p.day === todayData.num).length} problems →
+            </button>
+          )}
+        </div>
+      )}
+      <div className="grid-3">
+        {DAYS.map(day => {
+          const isToday = day.num === todayNum;
+          const hasProbs = hasDayProblems(day.num);
+          return (
+            <div
+              key={day.num}
+              data-day={day.num}
+              className={`day-card clickable${isToday ? ' today' : ''}`}
+              onClick={() => hasProbs && onDayClick(day.num)}
+              style={!hasProbs ? {cursor:'default'} : {}}
+            >
+              <div className="day-meta">
+                <span className="day-num">Day {day.num}</span>
+                <span className="day-date">{day.date}</span>
+                {isToday && (
+                  <span className="today-badge">
+                    <span className="today-dot" style={{background:'#fff', width:'6px', height:'6px'}} />
+                    Today
+                  </span>
+                )}
+              </div>
+              <div className="day-title">{day.title}</div>
+              <div className="topic-pills">
+                {day.topics.map(t => <span key={t} className="topic-pill">{t}</span>)}
+              </div>
+              <div className="schedule-list">
+                {day.schedule.map((s, i) => (
+                  <div key={i} className="sched-item">
+                    <span className="sched-period">{s.p}</span>
+                    <span className="sched-task">{s.t}</span>
+                    <span className="sched-dur">{s.d}</span>
+                  </div>
+                ))}
+              </div>
+              {hasProbs && (
+                <div className="view-probs-hint">
+                  View {PROBLEMS.filter(p => p.day === day.num).length} problem{PROBLEMS.filter(p => p.day === day.num).length > 1 ? 's' : ''} →
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 2: PATTERNS
+═══════════════════════════════════════════════════════════ */
+
+function Patterns() {
+  return (
+    <div>
+      {PATTERNS.map(p => (
+        <div key={p.name} className="pattern-card">
+          <div className="pattern-head">
+            <span className="pattern-name">{p.name}</span>
+            <span className="pattern-pill" style={{background:p.pill, color:p.pillText}}>{p.name}</span>
+          </div>
+          <div className="pattern-trigger"><strong>When you see:</strong> {p.trigger}</div>
+          <AnnotatedCode lines={p.lines} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 3: FLASHCARDS
+═══════════════════════════════════════════════════════════ */
+
+const FC_FILTERS = ['All','Arrays','Trees','Graphs','DP','Misc'];
+
+function Flashcards() {
+  const [filter, setFilter] = useState('All');
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+
+  const filtered = filter === 'All' ? FLASHCARDS : FLASHCARDS.filter(c => c.tag === filter.toLowerCase());
+  const card = filtered[Math.min(idx, filtered.length - 1)];
+
+  function changeFilter(f) { setFilter(f); setIdx(0); setFlipped(false); }
+  function prev() { setIdx(i => Math.max(0, i-1)); setFlipped(false); }
+  function next() { setIdx(i => Math.min(filtered.length-1, i+1)); setFlipped(false); }
+  function flip() { setFlipped(f => !f); }
+
+  if (!card) return <p style={{color:'var(--muted)'}}>No cards match this filter.</p>;
+
+  const cur = Math.min(idx, filtered.length - 1);
+
+  return (
+    <div className="flashcard-area">
+      <div className="filter-bar">
+        {FC_FILTERS.map(f => (
+          <button key={f} className={`filter-btn${filter===f?' active':''}`} onClick={() => changeFilter(f)}>{f}</button>
+        ))}
+      </div>
+
+      <div className="flashcard-wrapper" onClick={flip}>
+        <div className={`flashcard-inner${flipped ? ' flipped' : ''}`}>
+          {/* FRONT */}
+          <div className="fc-face">
+            <div className="fc-label-row">
+              <span className="badge badge-pat">{card.label}</span>
+              <span style={{fontSize:'11px', color:'var(--muted)'}}>tap to flip</span>
+            </div>
+            <div className="fc-q">{card.q}</div>
+            <div className="fc-hint">↕ click anywhere to reveal answer</div>
+          </div>
+          {/* BACK */}
+          <div className="fc-face fc-back-face">
+            <div className="fc-label-row">
+              <span className="badge badge-pat">{card.label}</span>
+              <span style={{fontSize:'11px', color:'var(--muted)'}}>tap to flip back</span>
+            </div>
+            <div className="fc-a">{card.a}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="fc-nav">
+        <button className="nav-btn" onClick={prev} disabled={cur === 0}>← Prev</button>
+        <span className="card-counter">{cur+1} / {filtered.length}</span>
+        <button className="nav-btn" onClick={next} disabled={cur === filtered.length-1}>Next →</button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 4: PROBLEMS
+═══════════════════════════════════════════════════════════ */
+
+const QUOTES = [
+  { text: "You can't spell 'algorithm' without 'I go thm'.", attr: '— Nobody' },
+  { text: "The best time to start LeetCode was 6 months ago. The second best time is right now.", attr: '— A tree that understood recursion' },
+  { text: "Two pointers: because one pointer wasn't dramatic enough.", attr: '— Knuth, probably' },
+  { text: "Dynamic programming: just recursion that remembered to take notes.", attr: '— CS professor somewhere' },
+  { text: "Big O(you've got this).", attr: '— Asymptotic encouragement' },
+  { text: "Sleep is O(1) recovery. Don't skip it.", attr: '— Your future self' },
+  { text: "If it works on the first try, you should be suspicious.", attr: '— Senior engineer, 3 AM' },
+  { text: "A hash map walks into a bar. O(1) later, it's already home.", attr: '— JavaScript weekly newsletter' },
+  { text: "Debugging is just you vs. you, and you always win eventually.", attr: '— Eternal optimist' },
+  { text: "Your brute force solution is a valid starting point, not a personal failure.", attr: '— Supportive interviewer' },
+  { text: "Every O(n²) solution is just an O(n) solution waiting to be discovered.", attr: '— Motivational poster, computer lab' },
+  { text: "The interviewer can smell your panic. Narrate anyway.", attr: '— Field notes from LeetCode' },
+  { text: "Recursion: the art of believing in yourself until the base case hits.", attr: '— Call stack therapist' },
+  { text: "You are not the worst person in the room. You are the only person in the room.", attr: '— Solo prep pep talk' },
+];
+
+const PROB_FILTERS = ['All','Easy','Medium','Hard','Arrays','Trees','Graphs','DP'];
+const PROB_DAY_FILTERS = [1,2,3,4,5,6,8]; // days that have problems assigned
+
+function ProblemCard({ p }) {
+  const [sol, setSol] = useState('brute');
+  const s = sol === 'brute' ? p.brute : p.optimal;
+
+  const claudePrompt =
+`I'm stuck on "${p.title}" (${p.diff} difficulty, pattern: ${p.pat}).
+
+Problem: ${p.desc}
+
+I'm looking at the ${sol === 'brute' ? 'brute force' : 'optimal'} solution:
+- Time: ${s.time} | Space: ${s.space}
+- Approach: ${s.what}
+
+Can you help me:
+1. Understand the key insight that makes this approach work
+2. Recognize when to use this pattern in an interview
+3. Identify common edge cases and mistakes to avoid`;
+
+  return (
+    <div className="problem-card">
+      <div className="prob-head">
+        <span className="prob-title">{p.title}</span>
+        <Badge diff={p.diff} />
+        <span className="badge badge-pat">{p.pat}</span>
+      </div>
+      <p className="prob-desc">{p.desc}</p>
+      <div className="sol-tabs">
+        <button className={`sol-tab${sol==='brute'?' active':''}`} onClick={() => setSol('brute')}>Brute Force</button>
+        <button className={`sol-tab${sol==='optimal'?' active':''}`} onClick={() => setSol('optimal')}>Optimal</button>
+      </div>
+      <div className="complexity-row">
+        <span className="cx-badge">⏱ {s.time}</span>
+        <span className="cx-badge">💾 {s.space}</span>
+      </div>
+      <div className="what-box">{s.what}</div>
+      <AnnotatedCode lines={s.lines} />
+      <div style={{marginTop:'14px',paddingTop:'12px',borderTop:'1px solid #f3f4f6'}}>
+        <AskClaudeInline prompt={claudePrompt} />
+      </div>
+    </div>
+  );
+}
+
+function Problems({ filter, setFilter }) {
+
+  const isDayFilter = filter.startsWith('day:');
+  const dayNum = isDayFilter ? parseInt(filter.split(':')[1]) : null;
+
+  const visible = PROBLEMS.filter(p => {
+    if (filter === 'All') return true;
+    if (isDayFilter) return p.day === dayNum;
+    return p.tags.includes(filter.toLowerCase());
+  });
+
+  const dayInfo = isDayFilter ? DAYS.find(d => d.num === dayNum) : null;
+
+  return (
+    <div>
+      <div className="filter-bar" style={{marginBottom:'8px'}}>
+        {PROB_FILTERS.map(f => (
+          <button key={f} className={`filter-btn${filter===f?' active':''}`} onClick={() => setFilter(f)}>{f}</button>
+        ))}
+      </div>
+      <div className="filter-bar" style={{marginBottom:'20px', paddingLeft:'2px'}}>
+        <span style={{fontSize:'11px',fontWeight:'600',textTransform:'uppercase',letterSpacing:'.07em',color:'var(--muted)',display:'flex',alignItems:'center',paddingRight:'4px'}}>By Day</span>
+        {PROB_DAY_FILTERS.map(n => {
+          const key = `day:${n}`;
+          return (
+            <button key={n} className={`filter-btn${filter===key?' active':''}`} onClick={() => setFilter(key)}>
+              Day {n}
+            </button>
+          );
+        })}
+      </div>
+      {dayInfo && (
+        <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'16px',paddingBottom:'14px',borderBottom:'1px solid #e5e5e5'}}>
+          <span style={{fontSize:'12px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'.08em',color:'var(--muted)'}}>Day {dayInfo.num} · {dayInfo.date}</span>
+          <span style={{fontSize:'15px',fontWeight:'600',color:'#111827'}}>{dayInfo.title}</span>
+          <div style={{display:'flex',gap:'5px',flexWrap:'wrap'}}>
+            {dayInfo.topics.map(t => <span key={t} className="topic-pill">{t}</span>)}
+          </div>
+        </div>
+      )}
+      {visible.length === 0
+        ? <p style={{color:'var(--muted)'}}>No problems match this filter.</p>
+        : visible.map(p => <ProblemCard key={p.id} p={p} />)
+      }
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 5: MOCK TIMER
+═══════════════════════════════════════════════════════════ */
+
+function MockTimer() {
+  const TOTAL = 45 * 60;
+  const [selected, setSelected] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(TOTAL);
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+  const ivRef = useRef(null);
+
+  useEffect(() => {
+    if (running) {
+      ivRef.current = setInterval(() => {
+        setTimeLeft(t => {
+          if (t <= 1) {
+            clearInterval(ivRef.current);
+            setRunning(false);
+            setDone(true);
+            return 0;
+          }
+          return t - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(ivRef.current);
+    }
+    return () => clearInterval(ivRef.current);
+  }, [running]);
+
+  const mins = Math.floor(timeLeft / 60);
+  const secs = timeLeft % 60;
+  const timerStr = `${pad(mins)}:${pad(secs)}`;
+
+  const timerClass = done ? 'timer-disp done'
+    : timeLeft <= 5*60 ? 'timer-disp danger'
+    : timeLeft <= 10*60 ? 'timer-disp warn'
+    : 'timer-disp';
+
+  const alert = done ? "Time's up! State your Big O."
+    : timeLeft <= 5*60 ? '5 min left — trace your solution!'
+    : timeLeft <= 10*60 ? '10 min left — start wrapping up.'
+    : '';
+
+  const alertClass = timeLeft <= 5*60 ? 'timer-alert danger' : 'timer-alert';
+
+  function reset() {
+    clearInterval(ivRef.current);
+    setRunning(false);
+    setDone(false);
+    setTimeLeft(TOTAL);
+  }
+
+  return (
+    <div>
+      <p style={{fontSize:'13px',color:'var(--muted)',marginBottom:'14px'}}>
+        Select a problem, then start the 45-minute timer.
+      </p>
+      <div className="mock-grid">
+        {PROBLEMS.map(p => (
+          <div
+            key={p.id}
+            className={`mock-card${selected===p.id ? ' selected' : ''}`}
+            onClick={() => setSelected(p.id)}
+          >
+            <div className="mock-title">{p.title}</div>
+            <div style={{display:'flex',gap:'6px',alignItems:'center',marginTop:'4px'}}>
+              <Badge diff={p.diff} />
+              <span className="mock-pat">{p.pat}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="timer-wrap">
+        <div className={timerClass}>{timerStr}</div>
+        <div className={alertClass}>{alert}</div>
+      </div>
+
+      <div className="timer-ctrls">
+        {!running && !done && (
+          <button className="t-btn primary" onClick={() => setRunning(true)}>Start</button>
+        )}
+        {running && (
+          <button className="t-btn" onClick={() => setRunning(false)}>Pause</button>
+        )}
+        {!running && done && (
+          <button className="t-btn primary" onClick={reset}>Start New Mock</button>
+        )}
+        {(running || (!done && timeLeft < TOTAL)) && (
+          <button className="t-btn" onClick={reset}>Reset</button>
+        )}
+      </div>
+
+      <div className="protocol-card">
+        <div className="protocol-title">Mock Protocol</div>
+        {[
+          {t:'0–5 min',d:'Clarify inputs, outputs, constraints, edge cases — do not write code yet.'},
+          {t:'5–10 min',d:'State a brute force approach out loud and its complexity.'},
+          {t:'10–30 min',d:'Code the optimized solution, narrating every line.'},
+          {t:'30–40 min',d:'Trace through a concrete example to verify.'},
+          {t:'40–45 min',d:'State Big O time and space, discuss edge cases.'},
+        ].map(item => (
+          <div key={item.t} className="p-item">
+            <span className="p-time">{item.t}</span>
+            <span className="p-desc">{item.d}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 6: TIPS
+═══════════════════════════════════════════════════════════ */
+
+function Tips() {
+  return (
+    <div className="tips-grid">
+      {TIPS.map(t => (
+        <div key={t.title} className="tip-card">
+          <div className="tip-title">{t.title}</div>
+          <ul className="tip-list">
+            {t.items.map((item, i) => <li key={i}>{item}</li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 7: RITUAL
+═══════════════════════════════════════════════════════════ */
+
+function InlineCode({ parts }) {
+  return parts.map((p, i) =>
+    i % 2 === 0
+      ? <span key={i}>{p}</span>
+      : <code key={i} className="ic">{p}</code>
+  );
+}
+
+function Ritual() {
+  return (
+    <div>
+      <div style={{marginBottom:'24px'}}>
+        <div className="section-title">The Interview Ritual</div>
+        <p style={{fontSize:'13.5px',color:'var(--muted)'}}>Run on every single problem, every single time, without exception.</p>
+      </div>
+
+      <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'36px'}}>
+        {RITUAL_STEPS.map(s => (
+          <div key={s.num} className="ritual-step">
+            <div className="ritual-num">{s.num}</div>
+            <div>
+              <div className="ritual-name">{s.name}</div>
+              <div className="ritual-desc">{s.desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="ref-section-title" style={{marginBottom:'8px'}}>Pattern → Algorithm</div>
+      <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'12px'}}>Know this cold.</p>
+      <div className="pattern-table-wrap" style={{marginBottom:'36px'}}>
+        <table className="pat-algo-table">
+          <thead><tr><th>When you see...</th><th>Reach for...</th></tr></thead>
+          <tbody>
+            {PATTERN_ALGO.map(row => (
+              <tr key={row.when}>
+                <td>{row.when}</td>
+                <td><span className="badge badge-pat">{row.reach}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="ref-section-title">7 Core Templates From Memory</div>
+      <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}}>Re-type each one without looking this morning. Check after. Fix gaps.</p>
+      <div className="grid-2">
+        {BRIEF_TEMPLATES.map(t => (
+          <div key={t.name} className="template-card">
+            <div className="template-name">{t.name}</div>
+            <div className="template-sub">{t.sub}</div>
+            <pre className="template-code">{t.code}</pre>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB 8: REFERENCE
+═══════════════════════════════════════════════════════════ */
+
+function Reference() {
+  return (
+    <div>
+      <div className="section-title" style={{marginBottom:'24px'}}>Templates &amp; Reference</div>
+
+      <div className="ref-section-title">Python Idioms</div>
+      <pre className="template-code" style={{marginBottom:'28px'}}>{PYTHON_IDIOMS}</pre>
+
+      <div className="ref-section-title">Gotchas</div>
+      <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'32px'}}>
+        {GOTCHAS.map((parts, i) => (
+          <div key={i} className="gotcha-item">
+            <InlineCode parts={parts} />
+          </div>
+        ))}
+      </div>
+
+      <div className="ref-section-title">The 7 Templates</div>
+      <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}}>Type all 7 from memory by interview day.</p>
+      <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+        {DETAIL_TEMPLATES.map(t => (
+          <div key={t.name} className="template-card">
+            <div className="template-name">{t.name}</div>
+            <div className="template-when"><strong>When to use:</strong> {t.when}</div>
+            <pre className="template-code">{t.code}</pre>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SHARED: EXPANDABLE DS / ALGO CARD
+═══════════════════════════════════════════════════════════ */
+
+function CxTable({ rows }) {
+  return (
+    <div className="cx-table-wrap">
+      <table className="cx-table">
+        <thead><tr><th>Operation</th><th>Time</th><th>Notes</th></tr></thead>
+        <tbody>
+          {rows.map((r,i) => (
+            <tr key={i}>
+              <td>{r.op}</td>
+              <td>{r.time}</td>
+              <td>{r.note}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function DSCard({ ds }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="ds-card">
+      <div className="ds-header" onClick={() => setOpen(o => !o)}>
+        <div className="ds-header-left">
+          <div className="ds-name-row">
+            <span className="ds-name">{ds.name}</span>
+            <span className="badge" style={{background:ds.bc,color:ds.bt}}>{ds.badge}</span>
+          </div>
+          <div className="ds-summary">{ds.summary}</div>
+        </div>
+        <span className="ds-toggle">{open ? '▲' : '▼'}</span>
+      </div>
+      {open && (
+        <div className="ds-body">
+          <CxTable rows={ds.ops} />
+          <div className="insight-box">{ds.insight}</div>
+          <div className="ds-section-label">When to reach for it</div>
+          <div className="pill-list">{ds.patterns.map((p,i) => <span key={i} className="pill-list-item">{p}</span>)}</div>
+          <div className="ds-section-label" style={{marginTop:'12px'}}>Interview pitfalls</div>
+          <div className="pitfall-list">{ds.pitfalls.map((p,i) => <div key={i} className="pitfall-item">⚠ {p}</div>)}</div>
+          <div className="ds-section-label" style={{marginTop:'12px'}}>Code</div>
+          <AnnotatedCode lines={ds.code.filter(l => l.c !== '')} />
+          <LCProblems problems={DS_LEETCODE[ds.name]} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AlgoCard({ algo }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="ds-card">
+      <div className="ds-header" onClick={() => setOpen(o => !o)}>
+        <div className="ds-header-left">
+          <div className="ds-name-row">
+            <span className="ds-name">{algo.name}</span>
+            <span className="badge" style={{background:algo.bc,color:algo.bt}}>{algo.badge}</span>
+            <span style={{fontFamily:"'Fira Code',monospace",fontSize:'11px',color:'var(--muted)'}}>{algo.summary}</span>
+          </div>
+          <div className="pill-list" style={{marginTop:'5px'}}>
+            {algo.when.map((w,i) => <span key={i} className="pill-list-item" style={{fontStyle:'italic'}}>{w}</span>)}
+          </div>
+        </div>
+        <span className="ds-toggle">{open ? '▲' : '▼'}</span>
+      </div>
+      {open && (
+        <div className="ds-body">
+          <div className="insight-box">{algo.insight}</div>
+          {algo.approaches ? (
+            algo.approaches.map((ap,i) => (
+              <div key={i} className="approach-block">
+                <div className="approach-header">
+                  <span className="approach-name">{ap.name}</span>
+                  <span className="approach-cx">⏱ {ap.time}</span>
+                  <span className="approach-cx">💾 {ap.space}</span>
+                  <span className="approach-verdict">{ap.verdict}</span>
+                </div>
+                <AnnotatedCode lines={ap.code.filter(l => l.c !== '')} />
+              </div>
+            ))
+          ) : (
+            <AnnotatedCode lines={algo.code.filter(l => l.c !== '')} />
+          )}
+          {algo.pitfalls && algo.pitfalls.length > 0 && (
+            <>
+              <div className="ds-section-label" style={{marginTop:'12px'}}>Pitfalls</div>
+              <div className="pitfall-list">{algo.pitfalls.map((p,i) => <div key={i} className="pitfall-item">⚠ {p}</div>)}</div>
+            </>
+          )}
+          <LCProblems problems={ALGO_LEETCODE[algo.name]} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB: DATA STRUCTURES
+═══════════════════════════════════════════════════════════ */
+
+function DataStructures() {
+  const [active, setActive] = useState(null);
+  const names = DS_DATA.map(d => d.name);
+  return (
+    <div>
+      <div className="section-title" style={{marginBottom:'6px'}}>Data Structures</div>
+      <p style={{fontSize:'13px',color:'var(--muted)',marginBottom:'16px'}}>Click any card to expand operations, code, patterns, and pitfalls.</p>
+      <div className="jump-bar">
+        {names.map(n => (
+          <button key={n} className="jump-btn" onClick={() => {
+            setActive(a => a === n ? null : n);
+            setTimeout(() => document.getElementById('ds-'+n.replace(/\W/g,''))?.scrollIntoView({behavior:'smooth',block:'start'}), 50);
+          }}>{n}</button>
+        ))}
+      </div>
+      {DS_DATA.map(ds => (
+        <div key={ds.name} id={'ds-'+ds.name.replace(/\W/g,'')}>
+          <DSCard ds={ds} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   TAB: ALGORITHMS
+═══════════════════════════════════════════════════════════ */
+
+function Algorithms() {
+  const names = ALGO_DATA.map(a => a.name.split(' ').slice(0,2).join(' '));
+  return (
+    <div>
+      <div className="section-title" style={{marginBottom:'6px'}}>Algorithms</div>
+      <p style={{fontSize:'13px',color:'var(--muted)',marginBottom:'16px'}}>Each card includes trigger phrases, key insight, annotated code, and pitfalls. The Kth Element card covers all four approaches.</p>
+      <div className="jump-bar">
+        {ALGO_DATA.map(a => (
+          <button key={a.name} className="jump-btn" onClick={() => {
+            setTimeout(() => document.getElementById('algo-'+a.name.replace(/\W/g,''))?.scrollIntoView({behavior:'smooth',block:'start'}), 50);
+          }}>{a.name.split(/[( /]/)[0]}</button>
+        ))}
+      </div>
+      {ALGO_DATA.map(algo => (
+        <div key={algo.name} id={'algo-'+algo.name.replace(/\W/g,'')}>
+          <AlgoCard algo={algo} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SIDE TIMER (right edge, vertically centered)
+═══════════════════════════════════════════════════════════ */
+
+const ST_MIN = 15 * 60;
+const ST_MAX = 120 * 60;
+const ST_STEP = 15 * 60;
+const ST_DEFAULT = 45 * 60;
+
+function SideTimer() {
+  const [preset, setPreset] = useState(ST_DEFAULT);
+  const [timeLeft, setTimeLeft] = useState(ST_DEFAULT);
+  const [running, setRunning] = useState(false);
+  const [done, setDone] = useState(false);
+  const ivRef = useRef(null);
+
+  useEffect(() => {
+    if (running) {
+      ivRef.current = setInterval(() => {
+        setTimeLeft(t => {
+          if (t <= 1) {
+            clearInterval(ivRef.current);
+            setRunning(false);
+            setDone(true);
+            return 0;
+          }
+          return t - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(ivRef.current);
+    }
+    return () => clearInterval(ivRef.current);
+  }, [running]);
+
+  function changePreset(delta) {
+    const next = Math.min(ST_MAX, Math.max(ST_MIN, preset + delta));
+    setPreset(next);
+    if (!running) { setTimeLeft(next); setDone(false); }
+  }
+
+  function reset() {
+    clearInterval(ivRef.current);
+    setRunning(false);
+    setDone(false);
+    setTimeLeft(preset);
+  }
+
+  const mins = pad(Math.floor(timeLeft / 60));
+  const secs = pad(timeLeft % 60);
+  const presetMins = preset / 60;
+  const timeClass = done ? 'st-time done' : running ? 'st-time running' : 'st-time';
+
+  return (
+    <div className="side-timer">
+      <button className="st-incr-btn" onClick={() => changePreset(ST_STEP)} disabled={preset >= ST_MAX}>+15m</button>
+      <div className="st-divider" />
+      <div className={timeClass}>{mins}:{secs}</div>
+      <div className="st-label">{running ? 'running' : done ? 'done' : `${presetMins}m set`}</div>
+      <div className="st-ctrl-row">
+        <button
+          className={`st-ctrl go`}
+          onClick={() => { if (done) reset(); else setRunning(r => !r); }}
+          title={done ? 'Reset' : running ? 'Pause' : 'Start'}
+        >
+          {done ? '↺' : running ? '‖' : '▶'}
+        </button>
+        <button className="st-ctrl" onClick={reset} title="Reset">↺</button>
+      </div>
+      <div className="st-divider" />
+      <button className="st-incr-btn" onClick={() => changePreset(-ST_STEP)} disabled={preset <= ST_MIN}>-15m</button>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   POMODORO WIDGET
+═══════════════════════════════════════════════════════════ */
+
+const POMO_WORK = 25 * 60;
+const POMO_BREAK = 5 * 60;
+
+function Pomodoro() {
+  const [mode, setMode] = useState('work'); // 'work' | 'break'
+  const [timeLeft, setTimeLeft] = useState(POMO_WORK);
+  const [running, setRunning] = useState(false);
+  const [sessions, setSessions] = useState(0);
+  const [minimized, setMinimized] = useState(false);
+  const ivRef = useRef(null);
+
+  useEffect(() => {
+    if (running) {
+      ivRef.current = setInterval(() => {
+        setTimeLeft(t => {
+          if (t <= 1) {
+            clearInterval(ivRef.current);
+            setRunning(false);
+            if (mode === 'work') {
+              setSessions(s => s + 1);
+              setMode('break');
+              setTimeLeft(POMO_BREAK);
+            } else {
+              setMode('work');
+              setTimeLeft(POMO_WORK);
+            }
+            return 0;
+          }
+          return t - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(ivRef.current);
+    }
+    return () => clearInterval(ivRef.current);
+  }, [running, mode]);
+
+  function reset() {
+    clearInterval(ivRef.current);
+    setRunning(false);
+    setTimeLeft(mode === 'work' ? POMO_WORK : POMO_BREAK);
+  }
+
+  function switchMode(m) {
+    clearInterval(ivRef.current);
+    setRunning(false);
+    setMode(m);
+    setTimeLeft(m === 'work' ? POMO_WORK : POMO_BREAK);
+  }
+
+  const mins = pad(Math.floor(timeLeft / 60));
+  const secs = pad(timeLeft % 60);
+  const timeStr = `${mins}:${secs}`;
+  const timeClass = running ? (mode === 'work' ? 'pomo-time-work' : 'pomo-time-brk') : 'pomo-time-idle';
+  const modeLabel = mode === 'work' ? 'Work' : 'Break';
+  const modeClass = mode === 'work' ? 'pomo-mode-work' : 'pomo-mode-brk';
+
+  return (
+    <div className={`pomo-widget${minimized ? ' minimized' : ''}`}>
+      <div className="pomo-header">
+        {!minimized && <span className={`pomo-mode-label ${modeClass}`}>{modeLabel}</span>}
+        {minimized && <span style={{fontSize:'10px',fontWeight:'700',textTransform:'uppercase',color:'var(--muted)',letterSpacing:'.06em'}}>Pomo</span>}
+        <button className="pomo-tog" onClick={() => setMinimized(m => !m)} title={minimized ? 'Expand' : 'Minimize'}>
+          {minimized ? '▲' : '▼'}
+        </button>
+      </div>
+      {minimized ? (
+        <div className="pomo-mini-body" onClick={() => setMinimized(false)} style={{cursor:'pointer'}}>
+          <div className={`pomo-mini-time ${timeClass}`}>{timeStr}</div>
+          <div className="pomo-mini-mode">{modeLabel}</div>
+        </div>
+      ) : (
+        <div className="pomo-body">
+          <div className={`pomo-time-disp ${timeClass}`}>{timeStr}</div>
+          <div className="pomo-sessions">{sessions} session{sessions !== 1 ? 's' : ''} done</div>
+          <div className="pomo-ctrls">
+            <button className={`pomo-btn go`} onClick={() => setRunning(r => !r)}>
+              {running ? 'Pause' : 'Start'}
+            </button>
+            <button className="pomo-btn" onClick={reset}>Reset</button>
+            <button className="pomo-btn" onClick={() => switchMode(mode === 'work' ? 'break' : 'work')}>
+              {mode === 'work' ? '☕' : '💻'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   APP SHELL
+═══════════════════════════════════════════════════════════ */
+
+// Tab indices: 0=Home 1=9-Day Plan 2=Patterns 3=Flashcards 4=Problems 5=Mock Timer 6=Tips 7=Ritual 8=Reference 9=Data Structures 10=Algorithms
+const TABS = ['Home','9-Day Plan','Patterns','Flashcards','Problems','Mock Timer','Tips','Ritual','Reference','Data Structures','Algorithms'];
+const PROBLEMS_TAB = 4;
+const MOCK_TAB = 5;
+const FLASHCARDS_TAB = 3;
+const PLAN_TAB = 1;
+const PATTERNS_TAB = 2;
+
+const TAB_CONTEXTS = [
+  'I have a general question about my interview prep.',
+  'I have a question about my 9-day study plan or scheduling.',
+  'I want to understand one of the algorithm patterns better.',
+  'I have a question about a flashcard concept.',
+  'I have a question about one of the coding problems.',
+  'I want to practice the mock interview format.',
+  'I have a question about interview tips or strategy.',
+  'I want to understand the interview ritual steps better.',
+  'I have a question about a Python idiom, gotcha, or template.',
+  'I have a question about a data structure — its operations, complexity, or when to use it.',
+  'I have a question about an algorithm — its approach, implementation, or trade-offs.',
+];
+
+function App() {
+  const [activeTab, setActiveTab] = useState(0);
+  const [probFilter, setProbFilter] = useState('All');
+
+  function goToProblems(filter) {
+    setProbFilter(filter || 'All');
+    setActiveTab(PROBLEMS_TAB);
+  }
+
+  const content = [
+    <Home
+      onGoToPlan={() => setActiveTab(PLAN_TAB)}
+      onGoToProblems={goToProblems}
+      onGoToFlashcards={() => setActiveTab(FLASHCARDS_TAB)}
+      onGoToMock={() => setActiveTab(MOCK_TAB)}
+      onGoToPatterns={() => setActiveTab(PATTERNS_TAB)}
+    />,
+    <DayPlan onDayClick={(dayNum) => goToProblems(`day:${dayNum}`)} />,
+    <Patterns />,
+    <Flashcards />,
+    <Problems filter={probFilter} setFilter={setProbFilter} />,
+    <MockTimer />,
+    <Tips />,
+    <Ritual />,
+    <Reference />,
+    <DataStructures />,
+    <Algorithms />,
+  ];
+
+  return (
+    <>
+      <nav className="tab-nav">
+        {TABS.map((t, i) => (
+          <button
+            key={t}
+            className={`tab-btn${activeTab===i ? ' active' : ''}`}
+            onClick={() => setActiveTab(i)}
+          >{t}</button>
+        ))}
+      </nav>
+      <div className="container">
+        {content[activeTab]}
+      </div>
+      <Pomodoro />
+      <SideTimer />
+      <div className="ai-fabs">
+        <AskClaudeFab activeContext={TAB_CONTEXTS[activeTab]} />
+        <AskGeminiFab activeContext={TAB_CONTEXTS[activeTab]} />
+        <AskChatGPTFab activeContext={TAB_CONTEXTS[activeTab]} />
+      </div>
+    </>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
