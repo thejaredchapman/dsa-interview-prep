@@ -195,7 +195,19 @@
     .what-box { font-size: 13px; color: #4b5563; margin-bottom: 12px; padding: 8px 12px; background: #f9fafb; border-radius: 4px; line-height: 1.55; border-left: 3px solid #e5e7eb; }
 
     /* ── MOCK TIMER ──────────────────────────────── */
-    .mock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 28px; }
+    .mock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-bottom: 20px; }
+    .mock-problem-panel { background: #fff; border: var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+    .mock-problem-title { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 8px; }
+    .mock-problem-desc { font-size: 14px; color: #374151; line-height: 1.7; margin-bottom: 16px; }
+    .mock-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 8px; margin-top: 16px; }
+    .mock-examples { display: flex; flex-direction: column; gap: 10px; }
+    .mock-example { background: var(--code-bg); border-radius: 5px; padding: 10px 14px; font-family: 'Fira Code', monospace; font-size: 12px; line-height: 1.7; }
+    .mock-example-io { color: #374151; }
+    .mock-example-label { color: var(--muted); font-size: 11px; margin-right: 4px; }
+    .mock-example-explanation { font-size: 12px; color: var(--muted); font-family: inherit; font-style: italic; margin-top: 4px; font-family: 'Inter', sans-serif; }
+    .mock-constraints { display: flex; flex-direction: column; gap: 4px; }
+    .mock-constraint { font-size: 12.5px; color: #374151; padding: 3px 0; font-family: 'Fira Code', monospace; }
+    .mock-no-problem { background: #f9fafb; border: var(--border); border-radius: var(--radius); padding: 28px 20px; text-align: center; color: var(--muted); font-size: 13.5px; margin-bottom: 20px; }
     .mock-card {
       background: #fff; border: var(--border); border-radius: var(--radius);
       padding: 14px 16px; cursor: pointer; transition: border-color .15s;
@@ -2625,9 +2637,177 @@ function Problems({ filter, setFilter }) {
    TAB 5: MOCK TIMER
 ═══════════════════════════════════════════════════════════ */
 
+const PROBLEM_DETAILS = {
+  1:  { constraints:['2 ≤ nums.length ≤ 10⁴','-10⁹ ≤ nums[i] ≤ 10⁹','-10⁹ ≤ target ≤ 10⁹','Only one valid answer exists.'],
+        examples:[{i:'nums = [2,7,11,15], target = 9',o:'[0,1]',e:'nums[0] + nums[1] = 2 + 7 = 9'},{i:'nums = [3,2,4], target = 6',o:'[1,2]'},{i:'nums = [3,3], target = 6',o:'[0,1]'}] },
+  2:  { constraints:["1 ≤ s.length ≤ 10⁴","s consists of '()[]{}'"],
+        examples:[{i:'s = "()"',o:'true'},{i:'s = "()[]{}"',o:'true'},{i:'s = "(]"',o:'false'}] },
+  3:  { constraints:['1 ≤ nums.length ≤ 10⁵','-10⁴ ≤ nums[i] ≤ 10⁴'],
+        examples:[{i:'nums = [-2,1,-3,4,-1,2,1,-5,4]',o:'6',e:'Subarray [4,-1,2,1] has sum 6'},{i:'nums = [1]',o:'1'},{i:'nums = [5,4,-1,7,8]',o:'23'}] },
+  4:  { constraints:['0 ≤ s.length ≤ 5 × 10⁴','s consists of English letters, digits, symbols, spaces'],
+        examples:[{i:'s = "abcabcbb"',o:'3',e:'Window "abc" has length 3'},{i:'s = "bbbbb"',o:'1',e:'Only "b"'},{i:'s = "pwwkew"',o:'3',e:'"wke" has length 3'}] },
+  5:  { constraints:['0 ≤ root ≤ 2000 nodes','−10⁵ ≤ Node.val ≤ 10⁵'],
+        examples:[{i:'root = [3,9,20,null,null,15,7]',o:'[[3],[9,20],[15,7]]',e:'Three levels returned as arrays'},{i:'root = [1]',o:'[[1]]'},{i:'root = []',o:'[]'}] },
+  6:  { constraints:["m == grid.length, n == grid[i].length","1 ≤ m, n ≤ 300","grid[i][j] is '0' or '1'"],
+        examples:[{i:'grid = [["1","1","1"],["0","1","0"],["1","1","1"]]',o:'1',e:'All 1s connected'},{i:'grid = [["1","1","0"],["1","1","0"],["0","0","1"]]',o:'2',e:'Two separate islands'}] },
+  7:  { constraints:['1 ≤ coins.length ≤ 12','1 ≤ coins[i] ≤ 2³¹−1','0 ≤ amount ≤ 10⁴'],
+        examples:[{i:'coins = [1,5,10], amount = 11',o:'2',e:'10 + 1 = 11'},{i:'coins = [2], amount = 3',o:'-1'},{i:'coins = [1], amount = 0',o:'0'}] },
+  8:  { constraints:['1 ≤ intervals.length ≤ 10⁴','intervals[i].length == 2','0 ≤ start_i ≤ end_i ≤ 10⁴'],
+        examples:[{i:'intervals = [[1,3],[2,6],[8,10],[15,18]]',o:'[[1,6],[8,10],[15,18]]',e:'[1,3] and [2,6] overlap → [1,6]'},{i:'intervals = [[1,4],[4,5]]',o:'[[1,5]]',e:'Touching intervals merge'}] },
+  9:  { constraints:['1 ≤ s.length ≤ 2 × 10⁵','s consists only of printable ASCII characters'],
+        examples:[{i:'s = "A man, a plan, a canal: Panama"',o:'true'},{i:'s = "race a car"',o:'false'},{i:'s = " "',o:'true',e:'Empty after filtering is a palindrome'}] },
+  10: { constraints:['1 ≤ strs.length ≤ 10⁴','0 ≤ strs[i].length ≤ 100','strs[i] consists of lowercase English letters'],
+        examples:[{i:'strs = ["eat","tea","tan","ate","nat","bat"]',o:'[["bat"],["nat","tan"],["ate","eat","tea"]]'},{i:'strs = [""]',o:'[[""]]'},{i:'strs = ["a"]',o:'[["a"]]'}] },
+  11: { constraints:['n == height.length','1 ≤ n ≤ 2 × 10⁴','0 ≤ height[i] ≤ 10⁵'],
+        examples:[{i:'height = [0,1,0,2,1,0,1,3,2,1,2,1]',o:'6',e:'6 units of water trapped between bars'},{i:'height = [4,2,0,3,2,5]',o:'9'}] },
+  12: { constraints:['0 ≤ word1.length, word2.length ≤ 500','word1 and word2 consist of lowercase English letters'],
+        examples:[{i:'word1 = "horse", word2 = "ros"',o:'3',e:'horse→rorse (replace h), rorse→rore (delete r), rore→rose (delete r), rose→ros (delete e). Wait, actually 3 ops.'},{i:'word1 = "intention", word2 = "execution"',o:'5'}] },
+  13: { constraints:['1 ≤ nums.length ≤ 10⁵','-2³¹ ≤ nums[i] ≤ 2³¹−1'],
+        examples:[{i:'nums = [1,3,-1,-3,5,3,6,7], k = 3',o:'[3,3,5,5,6,7]',e:'Max of each window of size 3'},{i:'nums = [1], k = 1',o:'[1]'}] },
+  14: { constraints:['0 ≤ n ≤ 2000 nodes','−10⁴ ≤ Node.val ≤ 10⁴'],
+        examples:[{i:'root = [1,2,3,4,5]',o:'Serialized and deserialized back to the same tree'},{i:'root = []',o:'[]'}] },
+  15: { constraints:['1 ≤ n ≤ 9'],
+        examples:[{i:'n = 4',o:'[[".Q..","...Q","Q...","..Q."],["..Q.","Q...","...Q",".Q.."]]',e:'Two distinct solutions for 4-queens'},{i:'n = 1',o:'[["Q"]]'}] },
+  // ── New problems ─────────────────────────────────────────
+  16: { constraints:['1 ≤ s.length, t.length ≤ 5 × 10⁴','s and t consist of lowercase English letters'],
+        examples:[{i:'s = "anagram", t = "nagaram"',o:'true'},{i:'s = "rat", t = "car"',o:'false'}] },
+  17: { constraints:['1 ≤ s.length ≤ 1000','s consists of digits and English letters'],
+        examples:[{i:'s = "babad"',o:'"bab"',e:'"aba" is also valid'},{i:'s = "cbbd"',o:'"bb"'}] },
+  18: { constraints:['1 ≤ nums.length ≤ 10⁵','-10⁹ ≤ nums[i] ≤ 10⁹'],
+        examples:[{i:'nums = [1,2,3,1]',o:'true'},{i:'nums = [1,2,3,4]',o:'false'},{i:'nums = [1,1,1,3,3,4,3,2,4,2]',o:'true'}] },
+  19: { constraints:['1 ≤ nums.length ≤ 10⁵','-10⁹ ≤ nums[i] ≤ 10⁹','−10⁹ ≤ target ≤ 10⁹','No integer overflow needed in Python'],
+        examples:[{i:'nums = [1,2,3,4]',o:'[24,12,8,6]',e:'[2×3×4, 1×3×4, 1×2×4, 1×2×3]'},{i:'nums = [-1,1,0,-3,3]',o:'[0,0,9,0,0]'}] },
+  20: { constraints:['1 ≤ prices.length ≤ 10⁵','0 ≤ prices[i] ≤ 10⁴'],
+        examples:[{i:'prices = [7,1,5,3,6,4]',o:'5',e:'Buy day 2 (price=1), sell day 5 (price=6), profit=5'},{i:'prices = [7,6,4,3,1]',o:'0',e:'No profitable transaction possible'}] },
+  21: { constraints:['0 ≤ n ≤ 5000 nodes','−5000 ≤ Node.val ≤ 5000'],
+        examples:[{i:'head = [1,2,3,4,5]',o:'[5,4,3,2,1]'},{i:'head = [1,2]',o:'[2,1]'},{i:'head = []',o:'[]'}] },
+  22: { constraints:['0 ≤ m, n ≤ 50 nodes each','−100 ≤ Node.val ≤ 100','Both lists are sorted in non-decreasing order'],
+        examples:[{i:'list1 = [1,2,4], list2 = [1,3,4]',o:'[1,1,2,3,4,4]'},{i:'list1 = [], list2 = []',o:'[]'}] },
+  23: { constraints:['0 ≤ n ≤ 10⁴ nodes','−10⁵ ≤ Node.val ≤ 10⁵','pos is -1 or a valid index'],
+        examples:[{i:'head = [3,2,0,-4], pos = 1',o:'true',e:'Tail connects to node at index 1'},{i:'head = [1,2], pos = 0',o:'true'},{i:'head = [1], pos = -1',o:'false'}] },
+  24: { constraints:['1 ≤ stack operations ≤ 3 × 10⁴','-2³¹ ≤ val ≤ 2³¹−1'],
+        examples:[{i:'MinStack(); push(-2); push(0); push(-3); getMin()→-3; pop(); top()→0; getMin()→-2',o:'null,null,null,-3,null,0,-2'}] },
+  25: { constraints:['0 ≤ n ≤ 10⁴ nodes','−100 ≤ Node.val ≤ 100'],
+        examples:[{i:'root = [3,9,20,null,null,15,7]',o:'3'},{i:'root = [1,null,2]',o:'2'},{i:'root = []',o:'0'}] },
+  26: { constraints:['Number of nodes in tree: 0 ≤ n ≤ 5000','−1000 ≤ Node.val ≤ 1000'],
+        examples:[{i:'root = [1,2,3]',o:'[1,3,2]',e:'Mirror: right side becomes left'},{i:'root = []',o:'[]'}] },
+  27: { constraints:['0 ≤ n ≤ 1000 nodes','−100 ≤ Node.val ≤ 100'],
+        examples:[{i:'root = [1,2,2,3,4,4,3]',o:'true'},{i:'root = [1,2,2,null,3,null,3]',o:'false',e:'Not symmetric — one side has null where other has 3'}] },
+  28: { constraints:['−3 × 10⁴ ≤ Node.val ≤ 3 × 10⁴','0 ≤ n ≤ 3 × 10⁴ nodes'],
+        examples:[{i:'root = [-10,9,20,null,null,15,7]',o:'42',e:'Path 15 → 20 → 7 = 42'},{i:'root = [1,2,3]',o:'6',e:'1+2+3 = 6'}] },
+  29: { constraints:['The graph is connected.','1 ≤ n ≤ 100 nodes','There are no repeated edges or self-loops.'],
+        examples:[{i:'adjList = [[2,4],[1,3],[2,4],[1,3]]',o:'Deep copy of [[2,4],[1,3],[2,4],[1,3]]'},{i:'adjList = [[]]',o:'[[]]',e:'Node with no neighbors'}] },
+  30: { constraints:['1 ≤ numCourses ≤ 2000','0 ≤ prerequisites.length ≤ 5000','prerequisites[i].length == 2','No duplicate edges'],
+        examples:[{i:'numCourses = 2, prerequisites = [[1,0]]',o:'true',e:'Take course 0 then course 1'},{i:'numCourses = 2, prerequisites = [[1,0],[0,1]]',o:'false',e:'Circular dependency'}] },
+  31: { constraints:['1 ≤ n ≤ 200 nodes','1 ≤ edges.length ≤ n−1','edges[i] = [ai, bi] where 1 ≤ ai, bi ≤ n'],
+        examples:[{i:'edges = [[1,2],[1,3],[2,3]]',o:'[2,3]',e:'[2,3] is the redundant edge forming the cycle'},{i:'edges = [[1,2],[2,3],[3,4],[1,4],[1,5]]',o:'[1,4]'}] },
+  32: { constraints:['1 ≤ nums.length ≤ 10⁴','-10⁴ ≤ nums[i] ≤ 10⁴','nums is sorted in ascending order','All integers are unique'],
+        examples:[{i:'nums = [-1,0,3,5,9,12], target = 9',o:'4',e:'9 is at index 4'},{i:'nums = [-1,0,3,5,9,12], target = 2',o:'-1'}] },
+  33: { constraints:['1 ≤ nums.length ≤ 5000','−10⁴ ≤ nums[i] ≤ 10⁴','All integers are unique','nums is a rotated sorted array'],
+        examples:[{i:'nums = [4,5,6,7,0,1,2], target = 0',o:'4'},{i:'nums = [4,5,6,7,0,1,2], target = 3',o:'-1'},{i:'nums = [1], target = 0',o:'-1'}] },
+  34: { constraints:['1 ≤ nums.length ≤ 10⁵','-10⁴ ≤ nums[i] ≤ 10⁴','k is in the range [1, len(nums)]'],
+        examples:[{i:'nums = [1,1,1,2,2,3], k = 2',o:'[1,2]'},{i:'nums = [1], k = 1',o:'[1]'}] },
+  35: { constraints:['1 ≤ n ≤ 45'],
+        examples:[{i:'n = 2',o:'2',e:'1 step + 1 step, or 2 steps'},{i:'n = 3',o:'3',e:'1+1+1, 1+2, or 2+1'},{i:'n = 1',o:'1'}] },
+  36: { constraints:['1 ≤ nums.length ≤ 100','0 ≤ nums[i] ≤ 400'],
+        examples:[{i:'nums = [1,2,3,1]',o:'4',e:'Rob houses 0 and 2: 1+3=4'},{i:'nums = [2,7,9,3,1]',o:'12',e:'Rob houses 0,2,4: 2+9+1=12'}] },
+  37: { constraints:['1 ≤ m, n ≤ 100'],
+        examples:[{i:'m = 3, n = 7',o:'28'},{i:'m = 3, n = 2',o:'3',e:'Down-down-right, down-right-down, right-down-down'},{i:'m = 1, n = 1',o:'1'}] },
+  38: { constraints:['1 ≤ text1.length, text2.length ≤ 1000','text1 and text2 consist of only lowercase English letters'],
+        examples:[{i:'text1 = "abcde", text2 = "ace"',o:'3',e:'"ace" is the LCS'},{i:'text1 = "abc", text2 = "abc"',o:'3'},{i:'text1 = "abc", text2 = "def"',o:'0'}] },
+  39: { constraints:['1 ≤ candidates.length ≤ 30','2 ≤ candidates[i] ≤ 40','All elements of candidates are distinct','1 ≤ target ≤ 40'],
+        examples:[{i:'candidates = [2,3,6,7], target = 7',o:'[[2,2,3],[7]]'},{i:'candidates = [2,3,5], target = 8',o:'[[2,2,2,2],[2,3,3],[3,5]]'}] },
+  40: { constraints:['1 ≤ nums.length ≤ 10','−10 ≤ nums[i] ≤ 10','All nums are unique'],
+        examples:[{i:'nums = [1,2,3]',o:'[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]'},{i:'nums = [0]',o:'[[],[0]]'}] },
+  41: { constraints:['1 ≤ nums.length ≤ 10⁴','0 ≤ nums[i] ≤ 10⁴'],
+        examples:[{i:'nums = [2,3,1,1,4]',o:'true',e:'From index 0 jump 1 to 1, then 3 to 4 (end)'},{i:'nums = [3,2,1,0,4]',o:'false',e:'Always stuck at index 3'}] },
+  42: { constraints:['1 ≤ s.length ≤ 300','s and wordDict consist of only lowercase English letters','1 ≤ wordDict.length ≤ 1000','1 ≤ wordDict[i].length ≤ 20'],
+        examples:[{i:'s = "leetcode", wordDict = ["leet","code"]',o:'true',e:'"leet" + "code"'},{i:'s = "applepenapple", wordDict = ["apple","pen"]',o:'true'},{i:'s = "catsandog", wordDict = ["cats","dog","sand","and","cat"]',o:'false'}] },
+  43: { constraints:['1 ≤ nums.length ≤ 2500','-10⁴ ≤ nums[i] ≤ 10⁴'],
+        examples:[{i:'nums = [10,9,2,5,3,7,101,18]',o:'4',e:'LIS: [2,3,7,101]'},{i:'nums = [0,1,0,3,2,3]',o:'4'},{i:'nums = [7,7,7,7,7]',o:'1'}] },
+  44: { constraints:['1 ≤ s.length ≤ 100','s contains only digits and may contain leading zeros'],
+        examples:[{i:'s = "12"',o:'2',e:'"1 2" or "12"'},{i:'s = "226"',o:'3',e:'"2 2 6", "22 6", or "2 26"'},{i:'s = "06"',o:'0',e:'Leading zero is invalid'}] },
+  45: { constraints:['3 ≤ nums.length ≤ 100','0 ≤ nums[i] ≤ 400','nums[0] == nums[n-1] (circular arrangement)'],
+        examples:[{i:'nums = [2,3,2]',o:'3',e:'Rob houses 0 and 2 is invalid (adjacent). Rob only 1 (3) or only 0 or 2 (2). Max = 3'},{i:'nums = [1,2,3,1]',o:'4',e:'Rob 0 and 2: 1+3=4'}] },
+  // 60-day problems
+  46: { constraints:['1 ≤ k ≤ n ≤ 100','1 ≤ edges.length ≤ 6000','times[i] = [ui, vi, wi], 1 ≤ wi ≤ 100'],
+        examples:[{i:'times = [[2,1,1],[2,3,1],[3,4,1]], n = 4, k = 2',o:'2'},{i:'times = [[1,2,1]], n = 2, k = 1',o:'1'},{i:'times = [[1,2,1]], n = 2, k = 2',o:'-1'}] },
+  47: { constraints:['1 ≤ beginWord.length ≤ 10','endWord.length == beginWord.length','1 ≤ wordList.length ≤ 5000','All words consist of lowercase English letters'],
+        examples:[{i:'beginWord = "hit", endWord = "cog", wordList = ["hot","dot","dog","lot","log","cog"]',o:'5',e:'hit→hot→dot→dog→cog'},{i:'beginWord = "hit", endWord = "cog", wordList = ["hot","dot","dog","lot","log"]',o:'0',e:'cog not in list'}] },
+  48: { constraints:['1 ≤ nums.length ≤ 300','0 ≤ nums[i] ≤ 100'],
+        examples:[{i:'nums = [3,1,5,8]',o:'167',e:'3→1→5→8 burst order: 3×1×5 + 3×5×8 + 1×3×8 + 1×8×1 = 167'},{i:'nums = [1,5]',o:'10'}] },
+  49: { constraints:['0 ≤ n ≤ 10⁴ nodes','0 ≤ Node.val ≤ 10⁴'],
+        examples:[{i:'root = [3,2,3,null,3,null,1]',o:'7',e:'Rob root(3) + leaves(3+1)=7 vs rob children(2+3)=5'},{i:'root = [3,4,5,1,3,null,1]',o:'9',e:'4+5=9'}] },
+  50: { constraints:['1 ≤ nums.length ≤ 3 × 10⁴','-10⁵ ≤ nums[i] ≤ 10⁵','At most 3 × 10⁴ calls to update and sumRange'],
+        examples:[{i:'nums=[1,3,5]; sumRange(0,2)→9; update(1,2); sumRange(0,2)→8',o:'null,9,null,8'}] },
+  51: { constraints:['1 ≤ heights.length ≤ 10⁵','0 ≤ heights[i] ≤ 10⁴'],
+        examples:[{i:'heights = [2,1,5,6,2,3]',o:'10',e:'Largest rectangle uses bars 3 and 4 (heights 5,6): width=2, height=5, area=10'},{i:'heights = [2,4]',o:'4'}] },
+  52: { constraints:['1 ≤ s.length ≤ 1000','1 ≤ t.length ≤ 1000','s and t consist of lowercase English letters'],
+        examples:[{i:'s = "rabbbit", t = "rabbit"',o:'3',e:'Three ways to delete a "b" from "rabbbit"'},{i:'s = "babgbag", t = "bag"',o:'5'}] },
+  53: { constraints:['m == s.length, n == t.length','1 ≤ m, n ≤ 10⁵','s and t consist of uppercase and lowercase English letters'],
+        examples:[{i:'s = "ADOBECODEBANC", t = "ABC"',o:'"BANC"',e:'Smallest window containing A, B, C'},{i:'s = "a", t = "a"',o:'"a"'},{i:'s = "a", t = "aa"',o:'""'}] },
+  // 90-day problems
+  54: { constraints:['1 ≤ capacity ≤ 3000','0 ≤ key ≤ 10⁴','0 ≤ value ≤ 10⁵','At most 2 × 10⁵ calls to get and put'],
+        examples:[{i:'LRUCache(2); put(1,1); put(2,2); get(1)→1; put(3,3); get(2)→-1; put(4,4); get(1)→-1; get(3)→3; get(4)→4',o:'null,null,null,1,null,-1,null,-1,3,4'}] },
+  55: { constraints:['n == nums.length','1 ≤ n ≤ 300','nums[i] is either 0, 1, or 2'],
+        examples:[{i:'nums = [2,0,2,1,1,0]',o:'[0,0,1,1,2,2]'},{i:'nums = [2,0,1]',o:'[0,1,2]'}] },
+  56: { constraints:['1 ≤ s.length ≤ 1000','s consists of lowercase English letters'],
+        examples:[{i:'s = "abc"',o:'3',e:'"a","b","c"'},{i:'s = "aaa"',o:'6',e:'"a"×3,"aa"×2,"aaa"×1'}] },
+  57: { constraints:['1 ≤ timestamps.length ≤ 1.8 × 10⁵','1 ≤ key.length ≤ 100','1 ≤ value.length ≤ 100','All timestamps are strictly increasing'],
+        examples:[{i:'set("foo",1,1); get("foo",1)→"1"; get("foo",3)→"1"; set("foo",2,4); get("foo",4)→"2"; get("foo",5)→"2"',o:'null,"1","1",null,"2","2"'}] },
+};
+
+function ProblemPanel({ problem }) {
+  const details = PROBLEM_DETAILS[problem.id];
+  const lc = PROBLEM_LC[problem.id];
+  return (
+    <div className="mock-problem-panel">
+      <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'8px',marginBottom:'10px'}}>
+        <span className="mock-problem-title">{problem.title}</span>
+        <Badge diff={problem.diff} />
+        <span className="badge badge-pat">{problem.pat}</span>
+        {lc && (
+          <button onClick={() => window.open(`https://leetcode.com/problems/${lc.slug}/`,'_blank','noopener')}
+            style={{marginLeft:'auto',padding:'3px 10px',border:'1px solid #FB923C',borderRadius:'5px',background:'#FFF7ED',cursor:'pointer',fontSize:'11.5px',fontWeight:'700',color:'#C2410C',fontFamily:'inherit'}}>
+            LC #{lc.num}
+          </button>
+        )}
+      </div>
+      <p className="mock-problem-desc">{problem.desc}</p>
+
+      {details?.examples?.length > 0 && (
+        <>
+          <div className="mock-section-label">Examples</div>
+          <div className="mock-examples">
+            {details.examples.map((ex, idx) => (
+              <div key={idx} className="mock-example">
+                <div><span className="mock-example-label">Input:</span><span className="mock-example-io">{ex.i}</span></div>
+                <div><span className="mock-example-label">Output:</span><span className="mock-example-io">{ex.o}</span></div>
+                {ex.e && <div className="mock-example-explanation">Explanation: {ex.e}</div>}
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {details?.constraints?.length > 0 && (
+        <>
+          <div className="mock-section-label">Constraints</div>
+          <div className="mock-constraints">
+            {details.constraints.map((c, i) => (
+              <div key={i} className="mock-constraint">• {c}</div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function MockTimer() {
   const TOTAL = 45 * 60;
   const [selected, setSelected] = useState(null);
+  const [diffFilter, setDiffFilter] = useState('All');
   const [timeLeft, setTimeLeft] = useState(TOTAL);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
@@ -2637,56 +2817,54 @@ function MockTimer() {
     if (running) {
       ivRef.current = setInterval(() => {
         setTimeLeft(t => {
-          if (t <= 1) {
-            clearInterval(ivRef.current);
-            setRunning(false);
-            setDone(true);
-            return 0;
-          }
+          if (t <= 1) { clearInterval(ivRef.current); setRunning(false); setDone(true); return 0; }
           return t - 1;
         });
       }, 1000);
-    } else {
-      clearInterval(ivRef.current);
-    }
+    } else { clearInterval(ivRef.current); }
     return () => clearInterval(ivRef.current);
   }, [running]);
+
+  function reset() { clearInterval(ivRef.current); setRunning(false); setDone(false); setTimeLeft(TOTAL); }
 
   const mins = Math.floor(timeLeft / 60);
   const secs = timeLeft % 60;
   const timerStr = `${pad(mins)}:${pad(secs)}`;
-
-  const timerClass = done ? 'timer-disp done'
-    : timeLeft <= 5*60 ? 'timer-disp danger'
-    : timeLeft <= 10*60 ? 'timer-disp warn'
-    : 'timer-disp';
-
-  const alert = done ? "Time's up! State your Big O."
-    : timeLeft <= 5*60 ? '5 min left — trace your solution!'
-    : timeLeft <= 10*60 ? '10 min left — start wrapping up.'
-    : '';
-
+  const timerClass = done ? 'timer-disp done' : timeLeft <= 5*60 ? 'timer-disp danger' : timeLeft <= 10*60 ? 'timer-disp warn' : 'timer-disp';
+  const alert = done ? "Time's up! State your Big O." : timeLeft <= 5*60 ? '5 min left — trace your solution!' : timeLeft <= 10*60 ? '10 min left — start wrapping up.' : '';
   const alertClass = timeLeft <= 5*60 ? 'timer-alert danger' : 'timer-alert';
 
-  function reset() {
-    clearInterval(ivRef.current);
-    setRunning(false);
-    setDone(false);
-    setTimeLeft(TOTAL);
-  }
+  const DIFF_COLORS = { All:'#374151', Easy:'#27500A', Medium:'#633806', Hard:'#791F1F' };
+  const DIFF_BG    = { All:'#fff',    Easy:'#EAF3DE', Medium:'#FAEEDA',  Hard:'#FCEBEB' };
+
+  const filteredProblems = diffFilter === 'All' ? PROBLEMS : PROBLEMS.filter(p => p.diff === diffFilter.toLowerCase());
+  const selectedProblem = selected ? PROBLEMS.find(p => p.id === selected) : null;
 
   return (
     <div>
-      <p style={{fontSize:'13px',color:'var(--muted)',marginBottom:'14px'}}>
-        Select a problem, then start the 45-minute timer.
-      </p>
+      {/* Difficulty filter */}
+      <div style={{display:'flex',gap:'8px',marginBottom:'12px',alignItems:'center'}}>
+        <span style={{fontSize:'11px',fontWeight:'700',textTransform:'uppercase',letterSpacing:'.07em',color:'var(--muted)'}}>Difficulty:</span>
+        {['All','Easy','Medium','Hard'].map(d => (
+          <button key={d} onClick={() => setDiffFilter(d)}
+            style={{
+              padding:'5px 14px', borderRadius:'100px', border:'1px solid',
+              borderColor: diffFilter===d ? DIFF_COLORS[d] : '#e5e5e5',
+              background: diffFilter===d ? DIFF_BG[d] : '#fff',
+              color: diffFilter===d ? DIFF_COLORS[d] : '#6b7280',
+              cursor:'pointer', fontSize:'12.5px', fontWeight:'600', fontFamily:'inherit',
+              transition:'all .15s',
+            }}
+          >{d}</button>
+        ))}
+        <span style={{marginLeft:'auto',fontSize:'12px',color:'var(--muted)'}}>{filteredProblems.length} problem{filteredProblems.length!==1?'s':''}</span>
+      </div>
+
+      {/* Problem selection grid */}
       <div className="mock-grid">
-        {PROBLEMS.map(p => (
-          <div
-            key={p.id}
-            className={`mock-card${selected===p.id ? ' selected' : ''}`}
-            onClick={() => setSelected(p.id)}
-          >
+        {filteredProblems.map(p => (
+          <div key={p.id} className={`mock-card${selected===p.id?' selected':''}`}
+            onClick={() => setSelected(id => id===p.id ? null : p.id)}>
             <div className="mock-title">{p.title}</div>
             <div style={{display:'flex',gap:'6px',alignItems:'center',marginTop:'4px'}}>
               <Badge diff={p.diff} />
@@ -2696,26 +2874,25 @@ function MockTimer() {
         ))}
       </div>
 
+      {/* Problem statement panel */}
+      {selectedProblem
+        ? <ProblemPanel problem={selectedProblem} />
+        : <div className="mock-no-problem">← Select a problem above to see the full statement, examples, and constraints.</div>
+      }
+
+      {/* Timer */}
       <div className="timer-wrap">
         <div className={timerClass}>{timerStr}</div>
         <div className={alertClass}>{alert}</div>
       </div>
-
       <div className="timer-ctrls">
-        {!running && !done && (
-          <button className="t-btn primary" onClick={() => setRunning(true)}>Start</button>
-        )}
-        {running && (
-          <button className="t-btn" onClick={() => setRunning(false)}>Pause</button>
-        )}
-        {!running && done && (
-          <button className="t-btn primary" onClick={reset}>Start New Mock</button>
-        )}
-        {(running || (!done && timeLeft < TOTAL)) && (
-          <button className="t-btn" onClick={reset}>Reset</button>
-        )}
+        {!running && !done && <button className="t-btn primary" onClick={() => setRunning(true)}>Start</button>}
+        {running && <button className="t-btn" onClick={() => setRunning(false)}>Pause</button>}
+        {!running && done && <button className="t-btn primary" onClick={reset}>Start New Mock</button>}
+        {(running || (!done && timeLeft < TOTAL)) && <button className="t-btn" onClick={reset}>Reset</button>}
       </div>
 
+      {/* Protocol */}
       <div className="protocol-card">
         <div className="protocol-title">Mock Protocol</div>
         {[
