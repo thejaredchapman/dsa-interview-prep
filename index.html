@@ -2444,9 +2444,28 @@ const QUOTES = [
 const PROB_FILTERS = ['All','Easy','Medium','Hard','Arrays','Trees','Graphs','DP'];
 const PROB_DAY_FILTERS = [1,2,3,4,5,6,8]; // days that have problems assigned
 
+const PROBLEM_LC = {
+  1:  { slug:'two-sum',                                          num:1   },
+  2:  { slug:'valid-parentheses',                                num:20  },
+  3:  { slug:'maximum-subarray',                                 num:53  },
+  4:  { slug:'longest-substring-without-repeating-characters',   num:3   },
+  5:  { slug:'binary-tree-level-order-traversal',                num:102 },
+  6:  { slug:'number-of-islands',                                num:200 },
+  7:  { slug:'coin-change',                                      num:322 },
+  8:  { slug:'merge-intervals',                                  num:56  },
+  9:  { slug:'valid-palindrome',                                 num:125 },
+  10: { slug:'group-anagrams',                                   num:49  },
+  11: { slug:'trapping-rain-water',                              num:42  },
+  12: { slug:'edit-distance',                                    num:72  },
+  13: { slug:'sliding-window-maximum',                           num:239 },
+  14: { slug:'serialize-and-deserialize-binary-tree',            num:297 },
+  15: { slug:'n-queens',                                         num:51  },
+};
+
 function ProblemCard({ p }) {
   const [sol, setSol] = useState('brute');
   const s = sol === 'brute' ? p.brute : p.optimal;
+  const lc = PROBLEM_LC[p.id];
 
   const claudePrompt =
 `I'm stuck on "${p.title}" (${p.diff} difficulty, pattern: ${p.pat}).
@@ -2468,6 +2487,12 @@ Can you help me:
         <span className="prob-title">{p.title}</span>
         <Badge diff={p.diff} />
         <span className="badge badge-pat">{p.pat}</span>
+        {lc && (
+          <button
+            onClick={() => window.open(`https://leetcode.com/problems/${lc.slug}/`, '_blank', 'noopener')}
+            style={{marginLeft:'auto',padding:'3px 10px',border:'1px solid #FB923C',borderRadius:'5px',background:'#FFF7ED',cursor:'pointer',fontSize:'11.5px',fontWeight:'700',color:'#C2410C',fontFamily:'inherit',whiteSpace:'nowrap'}}
+          >LC #{lc.num}</button>
+        )}
       </div>
       <p className="prob-desc">{p.desc}</p>
       <div className="sol-tabs">
