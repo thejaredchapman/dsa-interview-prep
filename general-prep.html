@@ -3297,9 +3297,18 @@ function FocusTab() {
 ═══════════════════════════════════════════════════════════ */
 
 function Patterns() {
+  const [sel, setSel] = useState(null);
+  const visible = sel ? PATTERNS.filter(p => p.name === sel) : PATTERNS;
   return (
     <div>
-      {PATTERNS.map(p => (
+      <div className="filter-bar" style={{marginBottom:'16px'}}>
+        <button className={`filter-btn${sel===null?' active':''}`} onClick={() => setSel(null)}>All</button>
+        {PATTERNS.map(p => (
+          <button key={p.name} className={`filter-btn${sel===p.name?' active':''}`}
+            onClick={() => setSel(s => s===p.name ? null : p.name)}>{p.name}</button>
+        ))}
+      </div>
+      {visible.map(p => (
         <div key={p.name} className="pattern-card">
           <div className="pattern-head">
             <span className="pattern-name">{p.name}</span>
@@ -3673,16 +3682,27 @@ function MockTimer() {
 ═══════════════════════════════════════════════════════════ */
 
 function Tips() {
+  const [sel, setSel] = useState(null);
+  const visible = sel ? TIPS.filter(t => t.title === sel) : TIPS;
   return (
-    <div className="tips-grid">
-      {TIPS.map(t => (
-        <div key={t.title} className="tip-card">
-          <div className="tip-title">{t.title}</div>
-          <ul className="tip-list">
-            {t.items.map((item, i) => <li key={i}>{item}</li>)}
-          </ul>
-        </div>
-      ))}
+    <div>
+      <div className="filter-bar" style={{marginBottom:'16px'}}>
+        <button className={`filter-btn${sel===null?' active':''}`} onClick={() => setSel(null)}>All</button>
+        {TIPS.map(t => (
+          <button key={t.title} className={`filter-btn${sel===t.title?' active':''}`}
+            onClick={() => setSel(s => s===t.title ? null : t.title)}>{t.title}</button>
+        ))}
+      </div>
+      <div className="tips-grid">
+        {visible.map(t => (
+          <div key={t.title} className="tip-card">
+            <div className="tip-title">{t.title}</div>
+            <ul className="tip-list">
+              {t.items.map((item, i) => <li key={i}>{item}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -3700,52 +3720,73 @@ function InlineCode({ parts }) {
 }
 
 function Ritual() {
+  const SECTIONS = ['Steps','Pattern Table','Templates'];
+  const [sel, setSel] = useState(null);
   return (
     <div>
-      <div style={{marginBottom:'24px'}}>
+      <div style={{marginBottom:'16px'}}>
         <div className="section-title">The Interview Ritual</div>
-        <p style={{fontSize:'13.5px',color:'var(--muted)'}}>Run on every single problem, every single time, without exception.</p>
+        <p style={{fontSize:'13.5px',color:'var(--muted)',marginTop:'4px'}}>Run on every single problem, every single time, without exception.</p>
+      </div>
+      <div className="filter-bar" style={{marginBottom:'20px'}}>
+        <button className={`filter-btn${sel===null?' active':''}`} onClick={() => setSel(null)}>All</button>
+        {SECTIONS.map(s => (
+          <button key={s} className={`filter-btn${sel===s?' active':''}`}
+            onClick={() => setSel(x => x===s ? null : s)}>{s}</button>
+        ))}
       </div>
 
-      <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'36px'}}>
-        {RITUAL_STEPS.map(s => (
-          <div key={s.num} className="ritual-step">
-            <div className="ritual-num">{s.num}</div>
-            <div>
-              <div className="ritual-name">{s.name}</div>
-              <div className="ritual-desc">{s.desc}</div>
+      {(sel===null||sel==='Steps') && (
+        <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'36px'}}>
+          {RITUAL_STEPS.map(s => (
+            <div key={s.num} className="ritual-step">
+              <div className="ritual-num">{s.num}</div>
+              <div><div className="ritual-name">{s.name}</div><div className="ritual-desc">{s.desc}</div></div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
-      <div className="ref-section-title" style={{marginBottom:'8px'}}>Pattern → Algorithm</div>
-      <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'12px'}}>Know this cold.</p>
-      <div className="pattern-table-wrap" style={{marginBottom:'36px'}}>
-        <table className="pat-algo-table">
-          <thead><tr><th>When you see...</th><th>Reach for...</th></tr></thead>
-          <tbody>
-            {PATTERN_ALGO.map(row => (
-              <tr key={row.when}>
-                <td>{row.when}</td>
-                <td><span className="badge badge-pat">{row.reach}</span></td>
-              </tr>
+      {(sel===null||sel==='Pattern Table') && (
+        <>
+          <div className="ref-section-title" style={{marginBottom:'8px'}}>Pattern → Algorithm</div>
+          <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'12px'}}>Know this cold.</p>
+          <div className="pattern-table-wrap" style={{marginBottom:'36px'}}>
+            <table className="pat-algo-table">
+              <thead><tr><th>When you see...</th><th>Reach for...</th></tr></thead>
+              <tbody>
+                {PATTERN_ALGO.map(row => (
+                  <tr key={row.when}><td>{row.when}</td><td><span className="badge badge-pat">{row.reach}</span></td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {(sel===null||sel==='Templates') && (
+        <>
+          <div className="ref-section-title">7 Core Templates From Memory</div>
+          <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}}>Re-type each one without looking this morning. Check after. Fix gaps.</p>
+          <div className="filter-bar" style={{marginBottom:'14px'}}>
+            {BRIEF_TEMPLATES.map(t => (
+              <button key={t.name} className={`filter-btn${sel===t.name?' active':''}`}
+                onClick={() => setSel(x => x===t.name ? 'Templates' : t.name)}>
+                {t.name.split(' ')[0]}{t.name.includes('(') ? ' '+t.name.split('(')[1].replace(')','') : ''}
+              </button>
             ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="ref-section-title">7 Core Templates From Memory</div>
-      <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}}>Re-type each one without looking this morning. Check after. Fix gaps.</p>
-      <div className="grid-2">
-        {BRIEF_TEMPLATES.map(t => (
-          <div key={t.name} className="template-card">
-            <div className="template-name">{t.name}</div>
-            <div className="template-sub">{t.sub}</div>
-            <pre className="template-code">{t.code}</pre>
           </div>
-        ))}
-      </div>
+          <div className="grid-2">
+            {(sel==='Templates'||sel===null ? BRIEF_TEMPLATES : BRIEF_TEMPLATES.filter(t=>t.name===sel)).map(t => (
+              <div key={t.name} className="template-card">
+                <div className="template-name">{t.name}</div>
+                <div className="template-sub">{t.sub}</div>
+                <pre className="template-code">{t.code}</pre>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -3755,37 +3796,66 @@ function Ritual() {
 ═══════════════════════════════════════════════════════════ */
 
 function Reference() {
+  const REF_SECS = ['Big O','Python Idioms','Gotchas','Templates'];
+  const [sel, setSel] = useState(null);
+  const show = s => sel===null||sel===s;
   return (
     <div>
       <div className="section-title" style={{marginBottom:'6px'}}>Templates &amp; Reference</div>
-      <p style={{fontSize:'13px',color:'var(--muted)',marginBottom:'24px'}}>Big O notation, Python idioms, gotchas, and all 7 annotated templates.</p>
-
-      <div className="ref-section-title" style={{marginBottom:'14px'}}>Big O Notation — Deep Reference</div>
-      <BigORef />
-
-      <div className="ref-section-title">Python Idioms</div>
-      <pre className="template-code" style={{marginBottom:'28px'}}>{PYTHON_IDIOMS}</pre>
-
-      <div className="ref-section-title">Gotchas</div>
-      <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'32px'}}>
-        {GOTCHAS.map((parts, i) => (
-          <div key={i} className="gotcha-item">
-            <InlineCode parts={parts} />
-          </div>
+      <div className="filter-bar" style={{marginBottom:'20px'}}>
+        <button className={`filter-btn${sel===null?' active':''}`} onClick={() => setSel(null)}>All</button>
+        {REF_SECS.map(s => (
+          <button key={s} className={`filter-btn${sel===s?' active':''}`}
+            onClick={() => setSel(x => x===s ? null : s)}>{s}</button>
         ))}
       </div>
 
-      <div className="ref-section-title">The 7 Templates</div>
-      <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'16px'}}>Type all 7 from memory by interview day.</p>
-      <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
-        {DETAIL_TEMPLATES.map(t => (
-          <div key={t.name} className="template-card">
-            <div className="template-name">{t.name}</div>
-            <div className="template-when"><strong>When to use:</strong> {t.when}</div>
-            <pre className="template-code">{t.code}</pre>
+      {show('Big O') && (
+        <>
+          <div className="ref-section-title" style={{marginBottom:'14px'}}>Big O Notation — Deep Reference</div>
+          <BigORef />
+        </>
+      )}
+      {show('Python Idioms') && (
+        <>
+          <div className="ref-section-title">Python Idioms</div>
+          <pre className="template-code" style={{marginBottom:'28px'}}>{PYTHON_IDIOMS}</pre>
+        </>
+      )}
+      {show('Gotchas') && (
+        <>
+          <div className="ref-section-title">Gotchas</div>
+          <div style={{display:'flex',flexDirection:'column',gap:'8px',marginBottom:'32px'}}>
+            {GOTCHAS.map((parts, i) => (
+              <div key={i} className="gotcha-item"><InlineCode parts={parts} /></div>
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
+      {show('Templates') && (
+        <>
+          <div className="ref-section-title">The 7 Templates</div>
+          <p style={{fontSize:'12px',color:'var(--muted)',marginBottom:'10px'}}>Type all 7 from memory by interview day.</p>
+          <div className="filter-bar" style={{marginBottom:'14px'}}>
+            {DETAIL_TEMPLATES.map(t => {
+              const short = t.name.replace('Template ','').replace(/: .+/,'');
+              return (
+                <button key={t.name} className={`filter-btn${sel===t.name?' active':''}`}
+                  onClick={() => setSel(x => x===t.name ? 'Templates' : t.name)}>{short}</button>
+              );
+            })}
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:'12px'}}>
+            {(sel==='Templates'||sel===null ? DETAIL_TEMPLATES : DETAIL_TEMPLATES.filter(t=>t.name===sel)).map(t => (
+              <div key={t.name} className="template-card">
+                <div className="template-name">{t.name}</div>
+                <div className="template-when"><strong>When to use:</strong> {t.when}</div>
+                <pre className="template-code">{t.code}</pre>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -3897,25 +3967,20 @@ function AlgoCard({ algo }) {
 ═══════════════════════════════════════════════════════════ */
 
 function DataStructures() {
-  const [active, setActive] = useState(null);
-  const names = DS_DATA.map(d => d.name);
+  const [sel, setSel] = useState(null);
+  const visible = sel ? DS_DATA.filter(d => d.name === sel) : DS_DATA;
   return (
     <div>
       <div className="section-title" style={{marginBottom:'6px'}}>Data Structures</div>
-      <p style={{fontSize:'13px',color:'var(--muted)',marginBottom:'16px'}}>Click any card to expand operations, code, patterns, and pitfalls.</p>
-      <div className="jump-bar">
-        {names.map(n => (
-          <button key={n} className="jump-btn" onClick={() => {
-            setActive(a => a === n ? null : n);
-            setTimeout(() => document.getElementById('ds-'+n.replace(/\W/g,''))?.scrollIntoView({behavior:'smooth',block:'start'}), 50);
-          }}>{n}</button>
+      <p style={{fontSize:'13px',color:'var(--muted)',marginBottom:'12px'}}>Select a structure to focus on it, or expand any card for details.</p>
+      <div className="jump-bar" style={{marginBottom:'16px'}}>
+        <button className={`phase-btn${sel===null?' active-phase':''}`} onClick={() => setSel(null)}>All</button>
+        {DS_DATA.map(d => (
+          <button key={d.name} className={`phase-btn${sel===d.name?' active-phase':''}`}
+            onClick={() => setSel(s => s===d.name ? null : d.name)}>{d.name}</button>
         ))}
       </div>
-      {DS_DATA.map(ds => (
-        <div key={ds.name} id={'ds-'+ds.name.replace(/\W/g,'')}>
-          <DSCard ds={ds} />
-        </div>
-      ))}
+      {visible.map(ds => <DSCard key={ds.name} ds={ds} />)}
     </div>
   );
 }
@@ -3925,23 +3990,22 @@ function DataStructures() {
 ═══════════════════════════════════════════════════════════ */
 
 function Algorithms() {
-  const names = ALGO_DATA.map(a => a.name.split(' ').slice(0,2).join(' '));
+  const [sel, setSel] = useState(null);
+  const visible = sel ? ALGO_DATA.filter(a => a.name === sel) : ALGO_DATA;
   return (
     <div>
       <div className="section-title" style={{marginBottom:'6px'}}>Algorithms</div>
-      <p style={{fontSize:'13px',color:'var(--muted)',marginBottom:'16px'}}>Each card includes trigger phrases, key insight, annotated code, and pitfalls. The Kth Element card covers all four approaches.</p>
-      <div className="jump-bar">
+      <p style={{fontSize:'13px',color:'var(--muted)',marginBottom:'12px'}}>Select an algorithm to focus on it. Kth Element covers all 4 approaches.</p>
+      <div className="jump-bar" style={{marginBottom:'16px'}}>
+        <button className={`phase-btn${sel===null?' active-phase':''}`} onClick={() => setSel(null)}>All</button>
         {ALGO_DATA.map(a => (
-          <button key={a.name} className="jump-btn" onClick={() => {
-            setTimeout(() => document.getElementById('algo-'+a.name.replace(/\W/g,''))?.scrollIntoView({behavior:'smooth',block:'start'}), 50);
-          }}>{a.name.split(/[( /]/)[0]}</button>
+          <button key={a.name} className={`phase-btn${sel===a.name?' active-phase':''}`}
+            onClick={() => setSel(s => s===a.name ? null : a.name)}>
+            {a.name.split(/[( /]/)[0]}
+          </button>
         ))}
       </div>
-      {ALGO_DATA.map(algo => (
-        <div key={algo.name} id={'algo-'+algo.name.replace(/\W/g,'')}>
-          <AlgoCard algo={algo} />
-        </div>
-      ))}
+      {visible.map(algo => <AlgoCard key={algo.name} algo={algo} />)}
     </div>
   );
 }
