@@ -171,9 +171,21 @@
     .card-counter { font-family: 'Fira Code', monospace; font-size: 13px; color: var(--muted); }
 
     /* ── PROBLEMS ────────────────────────────────── */
-    .problem-card { background: #fff; border: var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; }
+    .problem-card { background: #fff; border: var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; transition: border-color .2s, background .2s; }
+    .problem-card.is-done { border-left: 3px solid #059669; background: #F0FDF4; }
     .prob-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 10px; }
     .prob-title { font-size: 15.5px; font-weight: 600; }
+    .done-toggle {
+      width: 26px; height: 26px; border-radius: 50%; border: 2px solid #d1d5db;
+      background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; transition: all .2s; flex-shrink: 0;
+    }
+    .done-toggle:hover { border-color: #059669; background: #F0FDF4; }
+    .done-toggle.is-done { border-color: #059669; background: #059669; color: #fff; }
+    .prob-progress { background: #fff; border: var(--border); border-radius: var(--radius); padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .prob-progress-text { font-size: 13px; color: #374151; font-weight: 600; }
+    .prob-progress-bar-wrap { flex: 1; min-width: 120px; height: 6px; background: #e5e7eb; border-radius: 100px; overflow: hidden; }
+    .prob-progress-bar-fill { height: 100%; background: #059669; border-radius: 100px; transition: width .3s; }
     .prob-desc { font-size: 13.5px; color: #4b5563; margin-bottom: 16px; line-height: 1.6; }
     .sol-tabs { display: flex; border-bottom: var(--border); margin-bottom: 14px; }
     .sol-tab { padding: 8px 16px; border: none; background: transparent; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; font-family: inherit; }
@@ -2444,6 +2456,16 @@ const QUOTES = [
 const PROB_FILTERS = ['All','Easy','Medium','Hard','Arrays','Trees','Graphs','DP'];
 const PROB_DAY_FILTERS = [1,2,3,4,5,6,8]; // days that have problems assigned
 
+// ── Problem completion (localStorage) ────────────────────────
+function getCompletedProblems() {
+  try { return JSON.parse(localStorage.getItem('dsa_problems_done') || '{}'); } catch(e) { return {}; }
+}
+function saveProblemDone(id, val) {
+  const all = getCompletedProblems();
+  if (val) all[id] = true; else delete all[id];
+  try { localStorage.setItem('dsa_problems_done', JSON.stringify(all)); } catch(e) {}
+}
+
 const PROBLEM_LC = {
   1:  { slug:'two-sum',                                          num:1   },
   2:  { slug:'valid-parentheses',                                num:20  },
@@ -2464,8 +2486,16 @@ const PROBLEM_LC = {
 
 function ProblemCard({ p }) {
   const [sol, setSol] = useState('brute');
+  const [done, setDone] = useState(() => Boolean(getCompletedProblems()[p.id]));
   const s = sol === 'brute' ? p.brute : p.optimal;
   const lc = PROBLEM_LC[p.id];
+
+  function toggleDone(e) {
+    e.stopPropagation();
+    const next = !done;
+    setDone(next);
+    saveProblemDone(p.id, next);
+  }
 
   const claudePrompt =
 `I'm stuck on "${p.title}" (${p.diff} difficulty, pattern: ${p.pat}).
@@ -2482,9 +2512,14 @@ Can you help me:
 3. Identify common edge cases and mistakes to avoid`;
 
   return (
-    <div className="problem-card">
+    <div className={`problem-card${done ? ' is-done' : ''}`}>
       <div className="prob-head">
-        <span className="prob-title">{p.title}</span>
+        <button
+          className={`done-toggle${done ? ' is-done' : ''}`}
+          onClick={toggleDone}
+          title={done ? 'Mark as not done' : 'Mark as done'}
+        >{done ? '✓' : ''}</button>
+        <span className="prob-title" style={done ? {textDecoration:'line-through',color:'#6b7280'} : {}}>{p.title}</span>
         <Badge diff={p.diff} />
         <span className="badge badge-pat">{p.pat}</span>
         {lc && (
@@ -2513,6 +2548,10 @@ Can you help me:
 }
 
 function Problems({ filter, setFilter }) {
+  const [completedMap, setCompletedMap] = useState(getCompletedProblems);
+
+  // Re-read when a card toggles (children call saveProblemDone then this re-syncs)
+  function refreshDone() { setCompletedMap(getCompletedProblems()); }
 
   const isDayFilter = filter.startsWith('day:');
   const dayNum = isDayFilter ? parseInt(filter.split(':')[1]) : null;
@@ -2524,9 +2563,22 @@ function Problems({ filter, setFilter }) {
   });
 
   const dayInfo = isDayFilter ? DAYS.find(d => d.num === dayNum) : null;
+  const totalDone = PROBLEMS.filter(p => completedMap[p.id]).length;
+  const visibleDone = visible.filter(p => completedMap[p.id]).length;
+  const pct = PROBLEMS.length > 0 ? Math.round((totalDone / PROBLEMS.length) * 100) : 0;
 
   return (
-    <div>
+    <div onClick={refreshDone}>
+      <div className="prob-progress">
+        <span className="prob-progress-text">{totalDone} / {PROBLEMS.length} problems completed</span>
+        <div className="prob-progress-bar-wrap">
+          <div className="prob-progress-bar-fill" style={{width:`${pct}%`}} />
+        </div>
+        <span style={{fontSize:'12px',color:'#059669',fontWeight:'600'}}>{pct}%</span>
+        {visibleDone > 0 && filter !== 'All' && (
+          <span style={{fontSize:'12px',color:'var(--muted)'}}>{visibleDone}/{visible.length} shown</span>
+        )}
+      </div>
       <div className="filter-bar" style={{marginBottom:'8px'}}>
         {PROB_FILTERS.map(f => (
           <button key={f} className={`filter-btn${filter===f?' active':''}`} onClick={() => setFilter(f)}>{f}</button>
