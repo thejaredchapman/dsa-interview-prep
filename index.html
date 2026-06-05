@@ -2793,18 +2793,78 @@ const PROBLEM_DETAILS = {
 };
 
 // ── Pyodide (Python in browser) ───────────────────────────────
-let _pyodidePromise = null;
-function loadPyodideOnce() {
-  if (_pyodidePromise) return _pyodidePromise;
-  _pyodidePromise = new Promise((resolve, reject) => {
-    if (window.loadPyodide) { window.loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.26.0/full/'}).then(resolve).catch(reject); return; }
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.0/full/pyodide.js';
-    s.onload = () => window.loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.26.0/full/'}).then(resolve).catch(reject);
-    s.onerror = () => reject(new Error('Failed to load Pyodide'));
-    document.head.appendChild(s);
-  });
-  return _pyodidePromise;
+// Only keep a promise once it succeeds — failed promises are cleared so retry works
+let _pyodide = null;
+let _pyodideLoading = null;
+const PYODIDE_CDN = 'https://cdn.jsdelivr.net/pyodide/v0.26.0/full/';
+
+async function getPyodide() {
+  if (_pyodide) return _pyodide;
+  if (_pyodideLoading) return _pyodideLoading;
+
+  if (!window.WebAssembly) {
+    throw new Error('WebAssembly is not available in your browser.\nTry Chrome 89+, Firefox 89+, or Safari 15+.');
+  }
+
+  _pyodideLoading = (async () => {
+    // Load the Pyodide script if not already present
+    if (!window.loadPyodide) {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = PYODIDE_CDN + 'pyodide.js';
+        s.crossOrigin = 'anonymous';
+        s.onload = res;
+        s.onerror = () => rej(new Error(
+          'Could not download Python runtime from CDN.\n' +
+          'Check your internet connection and try again.'
+        ));
+        document.head.appendChild(s);
+      });
+    }
+
+    const py = await window.loadPyodide({ indexURL: PYODIDE_CDN });
+    // Pre-warm: import common DS&A modules so they are cached
+    await py.loadPackagesFromImports('import heapq, bisect, collections, functools, itertools, math');
+    _pyodide = py;
+    _pyodideLoading = null;
+    return py;
+  })();
+
+  _pyodideLoading.catch(() => { _pyodideLoading = null; }); // clear on failure so retry works
+  return _pyodideLoading;
+}
+
+// Run user code safely — always restores stdout/stderr and returns full traceback on error
+function runUserCode(py, userCode) {
+  // Escape user code for embedding in a Python string
+  const escaped = userCode.replace(/\\/g, '\\\\').replace(/"""/g, '\\"\\"\\"');
+
+  const wrapper = `
+import sys, io, traceback as _tb
+
+_cap_out = io.StringIO()
+_cap_err = io.StringIO()
+_old_out, _old_err = sys.stdout, sys.stderr
+sys.stdout = _cap_out
+sys.stderr = _cap_err
+_exec_error = None
+try:
+    exec("""${escaped}""", {})
+except Exception:
+    _exec_error = _tb.format_exc()
+finally:
+    sys.stdout = _old_out
+    sys.stderr = _old_err
+
+_result_out = _cap_out.getvalue()
+_result_err = _cap_err.getvalue()
+`;
+
+  py.runPython(wrapper);
+  const out = py.globals.get('_result_out') || '';
+  const err = py.globals.get('_result_err') || '';
+  const exc = py.globals.get('_exec_error');
+  return { out, err: err + (exc ? exc : ''), hasError: Boolean(exc) };
 }
 
 // ── Starter code templates ────────────────────────────────────
@@ -2947,43 +3007,53 @@ function CodeRunner({ problem }) {
     if (e.key === 'Tab') {
       e.preventDefault();
       const s = e.target.selectionStart, end = e.target.selectionEnd;
-      const next = code.substring(0, s) + '    ' + code.substring(end);
-      setCode(next);
+      setCode(c => c.substring(0, s) + '    ' + c.substring(end));
       requestAnimationFrame(() => { e.target.selectionStart = e.target.selectionEnd = s + 4; });
     }
   }
 
   async function runCode() {
+    if (status === 'loading' || status === 'running') return;
     setOutput(null); setTestResults(null); setStatus('loading');
+
     let py;
-    try { py = await loadPyodideOnce(); } catch(e) {
-      setOutput({ err: true, text: 'Could not load Python runtime. Check your internet connection.' });
+    try {
+      py = await getPyodide();
+    } catch(e) {
+      setOutput({ err: true, text: String(e.message || e) });
       setStatus('done'); return;
     }
-    setStatus('running');
-    try {
-      py.runPython('import sys, io\nsys.stdout = io.StringIO()\nsys.stderr = io.StringIO()');
-      py.runPython(code);
-      const out = py.runPython('sys.stdout.getvalue()');
-      setOutput({ err: false, text: out || '(no output — add a print() call)' });
 
+    setStatus('running');
+
+    // Run user code with safe stdout/stderr capture
+    const { out, err, hasError } = runUserCode(py, code);
+
+    if (hasError) {
+      setOutput({ err: true, text: err || out });
+    } else {
+      setOutput({ err: false, text: out || '(no output — add a print() call)' });
+      if (err) setOutput({ err: true, text: err }); // stderr even without exception
+
+      // Auto-tests: re-run user code then call each test function
       const tests = AUTO_TESTS[problem.id];
-      if (tests) {
+      if (tests && !hasError) {
         const res = tests.map(t => {
           try {
-            const got = py.runPython(`str(${t.call})`);
+            // The user's function is now defined in global scope after the exec above
+            const got = String(py.runPython(`str(${t.call})`));
             return { call: t.call, exp: t.exp, got, pass: got === t.exp };
           } catch(e) {
-            return { call: t.call, exp: t.exp, got: `Error`, pass: false };
+            // Extract the last line of the traceback for a concise error
+            const lines = String(e.message || e).trim().split('\n');
+            const msg = lines[lines.length - 1] || 'Error';
+            return { call: t.call, exp: t.exp, got: msg, pass: false };
           }
         });
         setTestResults(res);
       }
-    } catch(e) {
-      let errText = e.message || String(e);
-      try { const se = py.runPython('sys.stderr.getvalue()'); if (se) errText = se; } catch(_) {}
-      setOutput({ err: true, text: errText });
     }
+
     setStatus('done');
   }
 
@@ -2991,19 +3061,26 @@ function CodeRunner({ problem }) {
 
   return (
     <div className="code-editor-wrap">
-      <textarea className="code-editor" value={code}
+      <textarea
+        className="code-editor"
+        value={code}
         onChange={e => setCode(e.target.value)}
-        onKeyDown={handleKeyDown} spellCheck={false}
-        placeholder="Write your Python solution here..." />
+        onKeyDown={handleKeyDown}
+        spellCheck={false}
+        placeholder="Write your Python solution here..."
+      />
       <div className="code-run-row">
         <button className="code-run-btn" onClick={runCode}
           disabled={status === 'loading' || status === 'running'}>
-          {status === 'loading' ? '⏳ Loading Python runtime…' : status === 'running' ? '⏳ Running…' : '▶ Run Python'}
+          {status === 'loading' ? '⏳ Loading Python…' : status === 'running' ? '⏳ Running…' : '▶ Run Python'}
         </button>
-        <button className="code-reset-btn" onClick={() => { setCode(getStarterCode(problem.id, problem.title)); setOutput(null); setTestResults(null); setStatus('idle'); }}>
-          Reset
-        </button>
-        {status === 'loading' && <span className="code-pyodide-note">First run downloads ~10MB Python runtime (cached after)</span>}
+        <button className="code-reset-btn" onClick={() => {
+          setCode(getStarterCode(problem.id, problem.title));
+          setOutput(null); setTestResults(null); setStatus('idle');
+        }}>Reset</button>
+        {status === 'loading' && (
+          <span className="code-pyodide-note">First run: ~10MB Python download (cached after)</span>
+        )}
       </div>
 
       {output && (
@@ -3015,15 +3092,15 @@ function CodeRunner({ problem }) {
       {testResults && testResults.length > 0 && (
         <div className="code-tests">
           <div className="code-tests-header">
-            Auto-tests: {passing}/{testResults.length} passing
-            {passing === testResults.length ? ' ✓ All pass!' : ''}
+            Auto-tests — {passing}/{testResults.length} passing
+            {passing === testResults.length ? '  ✓ All pass!' : ''}
           </div>
           {testResults.map((r, i) => (
             <div key={i} className={`code-test-row ${r.pass ? 'pass' : 'fail'}`}>
               <span className="code-test-icon">{r.pass ? '✓' : '✗'}</span>
               <span className="code-test-call">{r.call}</span>
               <span className="code-test-result">
-                {r.pass ? `→ ${r.got}` : `got ${r.got}, want ${r.exp}`}
+                {r.pass ? `→ ${r.got}` : `got: ${r.got}  want: ${r.exp}`}
               </span>
             </div>
           ))}
