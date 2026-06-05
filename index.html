@@ -2836,10 +2836,12 @@ async function getPyodide() {
 
 // Run user code safely — always restores stdout/stderr and returns full traceback on error
 function runUserCode(py, userCode) {
-  // Escape user code for embedding in a Python string
-  const escaped = userCode.replace(/\\/g, '\\\\').replace(/"""/g, '\\"\\"\\"');
+  // Pass code as a Python variable — no string escaping needed.
+  // exec() WITHOUT a second argument runs in the current (global) scope,
+  // so function definitions persist in py.globals and are available for auto-tests.
+  py.globals.set('_user_code', userCode);
 
-  const wrapper = `
+  py.runPython(`
 import sys, io, traceback as _tb
 
 _cap_out = io.StringIO()
@@ -2849,7 +2851,7 @@ sys.stdout = _cap_out
 sys.stderr = _cap_err
 _exec_error = None
 try:
-    exec("""${escaped}""", {})
+    exec(_user_code)
 except Exception:
     _exec_error = _tb.format_exc()
 finally:
@@ -2858,9 +2860,8 @@ finally:
 
 _result_out = _cap_out.getvalue()
 _result_err = _cap_err.getvalue()
-`;
+`);
 
-  py.runPython(wrapper);
   const out = py.globals.get('_result_out') || '';
   const err = py.globals.get('_result_err') || '';
   const exc = py.globals.get('_exec_error');
