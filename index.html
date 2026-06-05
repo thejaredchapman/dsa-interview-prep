@@ -196,6 +196,38 @@
 
     /* ── MOCK TIMER ──────────────────────────────── */
     .mock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-bottom: 20px; }
+    /* code runner */
+    .mock-tabs { display: flex; border-bottom: var(--border); margin-bottom: 0; }
+    .mock-tab-btn { padding: 10px 18px; border: none; background: transparent; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; font-family: inherit; }
+    .mock-tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .mock-tab-btn:hover:not(.active) { color: #374151; }
+    .code-editor-wrap { display: flex; flex-direction: column; gap: 10px; padding: 16px 20px 20px; background: #fff; border: var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); margin-bottom: 20px; }
+    .code-editor {
+      font-family: 'Fira Code', monospace; font-size: 13px; line-height: 1.65;
+      padding: 14px 16px; border: 1px solid #3c3c3c; border-radius: 6px;
+      background: #1e1e1e; color: #d4d4d4; resize: vertical; min-height: 220px;
+      width: 100%; tab-size: 4; white-space: pre; overflow-x: auto;
+    }
+    .code-editor:focus { outline: none; border-color: var(--blue); }
+    .code-run-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .code-run-btn { padding: 8px 20px; background: #22c55e; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 13.5px; font-weight: 700; font-family: inherit; transition: background .15s; }
+    .code-run-btn:hover:not(:disabled) { background: #16a34a; }
+    .code-run-btn:disabled { opacity: .5; cursor: default; }
+    .code-reset-btn { padding: 8px 14px; border: var(--border); border-radius: 6px; background: #fff; cursor: pointer; font-size: 12.5px; font-weight: 600; font-family: inherit; }
+    .code-reset-btn:hover { background: #f5f5f5; }
+    .code-pyodide-note { font-size: 11.5px; color: var(--muted); font-style: italic; }
+    .code-output { font-family: 'Fira Code', monospace; font-size: 12.5px; padding: 12px 14px; border-radius: 6px; background: #f4f4f5; border: var(--border); min-height: 48px; white-space: pre-wrap; line-height: 1.6; color: #374151; }
+    .code-output.error { background: #FEF2F2; border-color: #FECACA; color: #DC2626; }
+    .code-tests { display: flex; flex-direction: column; gap: 6px; }
+    .code-tests-header { font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .07em; }
+    .code-test-row { display: flex; align-items: flex-start; gap: 8px; padding: 6px 10px; border-radius: 5px; font-size: 12px; font-family: 'Fira Code', monospace; }
+    .code-test-row.pass { background: #F0FDF4; border: 1px solid #BBF7D0; }
+    .code-test-row.fail { background: #FEF2F2; border: 1px solid #FECACA; }
+    .code-test-icon { font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .code-test-row.pass .code-test-icon { color: #059669; }
+    .code-test-row.fail .code-test-icon { color: #DC2626; }
+    .code-test-call { color: #374151; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+    .code-test-result { color: var(--muted); flex-shrink: 0; }
     .mock-problem-panel { background: #fff; border: var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
     .mock-problem-title { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 8px; }
     .mock-problem-desc { font-size: 14px; color: #374151; line-height: 1.7; margin-bottom: 16px; }
@@ -2760,49 +2792,305 @@ const PROBLEM_DETAILS = {
         examples:[{i:'set("foo",1,1); get("foo",1)→"1"; get("foo",3)→"1"; set("foo",2,4); get("foo",4)→"2"; get("foo",5)→"2"',o:'null,"1","1",null,"2","2"'}] },
 };
 
+// ── Pyodide (Python in browser) ───────────────────────────────
+let _pyodidePromise = null;
+function loadPyodideOnce() {
+  if (_pyodidePromise) return _pyodidePromise;
+  _pyodidePromise = new Promise((resolve, reject) => {
+    if (window.loadPyodide) { window.loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.26.0/full/'}).then(resolve).catch(reject); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.0/full/pyodide.js';
+    s.onload = () => window.loadPyodide({indexURL:'https://cdn.jsdelivr.net/pyodide/v0.26.0/full/'}).then(resolve).catch(reject);
+    s.onerror = () => reject(new Error('Failed to load Pyodide'));
+    document.head.appendChild(s);
+  });
+  return _pyodidePromise;
+}
+
+// ── Starter code templates ────────────────────────────────────
+const STARTER_CODE = {
+  1: `def two_sum(nums, target):
+    # Your solution here
+    pass
+
+print(two_sum([2, 7, 11, 15], 9))  # → [0, 1]
+print(two_sum([3, 2, 4], 6))       # → [1, 2]
+print(two_sum([3, 3], 6))          # → [0, 1]`,
+  2: `def is_valid(s):
+    pass
+
+print(is_valid("()"))      # → True
+print(is_valid("()[]{}")) # → True
+print(is_valid("(]"))     # → False`,
+  3: `def max_subarray(nums):
+    pass
+
+print(max_subarray([-2,1,-3,4,-1,2,1,-5,4]))  # → 6
+print(max_subarray([1]))                         # → 1
+print(max_subarray([5,4,-1,7,8]))               # → 23`,
+  4: `def length_of_longest(s):
+    pass
+
+print(length_of_longest("abcabcbb"))  # → 3
+print(length_of_longest("bbbbb"))     # → 1
+print(length_of_longest("pwwkew"))    # → 3`,
+  5: `class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val=val; self.left=left; self.right=right
+
+def level_order(root):
+    pass
+
+# Build [3,9,20,null,null,15,7]
+root = TreeNode(3, TreeNode(9), TreeNode(20, TreeNode(15), TreeNode(7)))
+print(level_order(root))   # → [[3], [9, 20], [15, 7]]
+print(level_order(None))   # → []`,
+  6: `def num_islands(grid):
+    pass
+
+g1 = [["1","1","1","1","0"],["1","1","0","1","0"],["1","1","0","0","0"],["0","0","0","0","0"]]
+print(num_islands(g1))  # → 1
+g2 = [["1","1","0","0","0"],["1","1","0","0","0"],["0","0","1","0","0"],["0","0","0","1","1"]]
+print(num_islands(g2))  # → 3`,
+  7: `def coin_change(coins, amount):
+    pass
+
+print(coin_change([1,5,11], 15))  # → 3  (5+5+5)
+print(coin_change([2], 3))        # → -1
+print(coin_change([1], 0))        # → 0`,
+  8: `def merge(intervals):
+    pass
+
+print(merge([[1,3],[2,6],[8,10],[15,18]]))  # → [[1, 6], [8, 10], [15, 18]]
+print(merge([[1,4],[4,5]]))                 # → [[1, 5]]`,
+  9: `def is_palindrome(s):
+    pass
+
+print(is_palindrome("A man, a plan, a canal: Panama"))  # → True
+print(is_palindrome("race a car"))                       # → False
+print(is_palindrome(" "))                                # → True`,
+  10: `def group_anagrams(strs):
+    pass
+
+result = group_anagrams(["eat","tea","tan","ate","nat","bat"])
+# Sort each group for consistent comparison
+result_sorted = sorted([sorted(g) for g in result])
+print(result_sorted)
+# → [['bat'], ['ate', 'eat', 'tea'], ['nat', 'tan']] (sorted)`,
+  11: `def trap(height):
+    pass
+
+print(trap([0,1,0,2,1,0,1,3,2,1,2,1]))  # → 6
+print(trap([4,2,0,3,2,5]))               # → 9`,
+  12: `def min_distance(word1, word2):
+    pass
+
+print(min_distance("horse", "ros"))      # → 3
+print(min_distance("intention", "execution"))  # → 5
+print(min_distance("", "abc"))           # → 3`,
+  13: `from collections import deque
+
+def max_sliding_window(nums, k):
+    pass
+
+print(max_sliding_window([1,3,-1,-3,5,3,6,7], 3))  # → [3, 3, 5, 5, 6, 7]
+print(max_sliding_window([1], 1))                    # → [1]`,
+  14: `# Serialize and Deserialize Binary Tree
+class TreeNode:
+    def __init__(self, val=0, left=None, right=None):
+        self.val=val; self.left=left; self.right=right
+
+def serialize(root):
+    pass
+
+def deserialize(data):
+    pass
+
+root = TreeNode(1, TreeNode(2), TreeNode(3, TreeNode(4), TreeNode(5)))
+data = serialize(root)
+print(data)
+restored = deserialize(data)
+print(serialize(restored))  # Should match original`,
+  15: `def solve_n_queens(n):
+    pass
+
+solutions = solve_n_queens(4)
+print(len(solutions))       # → 2
+for s in solutions: print(s)`,
+};
+
+function getStarterCode(id, title) {
+  return STARTER_CODE[id] || `# ${title}\n# Write your solution here\n\ndef solution():\n    pass\n\nprint(solution())\n`;
+}
+
+// ── Auto test cases ───────────────────────────────────────────
+const AUTO_TESTS = {
+  1:  [{call:'two_sum([2,7,11,15], 9)',exp:'[0, 1]'},{call:'two_sum([3,2,4], 6)',exp:'[1, 2]'},{call:'two_sum([3,3], 6)',exp:'[0, 1]'}],
+  2:  [{call:'is_valid("()")',exp:'True'},{call:'is_valid("()[]{}")',exp:'True'},{call:'is_valid("(]")',exp:'False'},{call:'is_valid("([)]")',exp:'False'}],
+  3:  [{call:'max_subarray([-2,1,-3,4,-1,2,1,-5,4])',exp:'6'},{call:'max_subarray([1])',exp:'1'},{call:'max_subarray([5,4,-1,7,8])',exp:'23'}],
+  4:  [{call:'length_of_longest("abcabcbb")',exp:'3'},{call:'length_of_longest("bbbbb")',exp:'1'},{call:'length_of_longest("pwwkew")',exp:'3'},{call:'length_of_longest("")',exp:'0'}],
+  7:  [{call:'coin_change([1,5,11], 15)',exp:'3'},{call:'coin_change([2], 3)',exp:'-1'},{call:'coin_change([1], 0)',exp:'0'}],
+  9:  [{call:'is_palindrome("A man, a plan, a canal: Panama")',exp:'True'},{call:'is_palindrome("race a car")',exp:'False'}],
+  11: [{call:'trap([0,1,0,2,1,0,1,3,2,1,2,1])',exp:'6'},{call:'trap([4,2,0,3,2,5])',exp:'9'},{call:'trap([])',exp:'0'}],
+  12: [{call:'min_distance("horse","ros")',exp:'3'},{call:'min_distance("intention","execution")',exp:'5'},{call:'min_distance("","abc")',exp:'3'}],
+  13: [{call:'max_sliding_window([1,3,-1,-3,5,3,6,7],3)',exp:'[3, 3, 5, 5, 6, 7]'},{call:'max_sliding_window([1],1)',exp:'[1]'}],
+};
+
+// ── Code Runner component ─────────────────────────────────────
+function CodeRunner({ problem }) {
+  const [code, setCode] = useState(() => getStarterCode(problem.id, problem.title));
+  const [output, setOutput] = useState(null);
+  const [testResults, setTestResults] = useState(null);
+  const [status, setStatus] = useState('idle'); // idle | loading | running | done
+
+  function handleKeyDown(e) {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const s = e.target.selectionStart, end = e.target.selectionEnd;
+      const next = code.substring(0, s) + '    ' + code.substring(end);
+      setCode(next);
+      requestAnimationFrame(() => { e.target.selectionStart = e.target.selectionEnd = s + 4; });
+    }
+  }
+
+  async function runCode() {
+    setOutput(null); setTestResults(null); setStatus('loading');
+    let py;
+    try { py = await loadPyodideOnce(); } catch(e) {
+      setOutput({ err: true, text: 'Could not load Python runtime. Check your internet connection.' });
+      setStatus('done'); return;
+    }
+    setStatus('running');
+    try {
+      py.runPython('import sys, io\nsys.stdout = io.StringIO()\nsys.stderr = io.StringIO()');
+      py.runPython(code);
+      const out = py.runPython('sys.stdout.getvalue()');
+      setOutput({ err: false, text: out || '(no output — add a print() call)' });
+
+      const tests = AUTO_TESTS[problem.id];
+      if (tests) {
+        const res = tests.map(t => {
+          try {
+            const got = py.runPython(`str(${t.call})`);
+            return { call: t.call, exp: t.exp, got, pass: got === t.exp };
+          } catch(e) {
+            return { call: t.call, exp: t.exp, got: `Error`, pass: false };
+          }
+        });
+        setTestResults(res);
+      }
+    } catch(e) {
+      let errText = e.message || String(e);
+      try { const se = py.runPython('sys.stderr.getvalue()'); if (se) errText = se; } catch(_) {}
+      setOutput({ err: true, text: errText });
+    }
+    setStatus('done');
+  }
+
+  const passing = testResults ? testResults.filter(r => r.pass).length : 0;
+
+  return (
+    <div className="code-editor-wrap">
+      <textarea className="code-editor" value={code}
+        onChange={e => setCode(e.target.value)}
+        onKeyDown={handleKeyDown} spellCheck={false}
+        placeholder="Write your Python solution here..." />
+      <div className="code-run-row">
+        <button className="code-run-btn" onClick={runCode}
+          disabled={status === 'loading' || status === 'running'}>
+          {status === 'loading' ? '⏳ Loading Python runtime…' : status === 'running' ? '⏳ Running…' : '▶ Run Python'}
+        </button>
+        <button className="code-reset-btn" onClick={() => { setCode(getStarterCode(problem.id, problem.title)); setOutput(null); setTestResults(null); setStatus('idle'); }}>
+          Reset
+        </button>
+        {status === 'loading' && <span className="code-pyodide-note">First run downloads ~10MB Python runtime (cached after)</span>}
+      </div>
+
+      {output && (
+        <div className={`code-output${output.err ? ' error' : ''}`}>
+          {output.text}
+        </div>
+      )}
+
+      {testResults && testResults.length > 0 && (
+        <div className="code-tests">
+          <div className="code-tests-header">
+            Auto-tests: {passing}/{testResults.length} passing
+            {passing === testResults.length ? ' ✓ All pass!' : ''}
+          </div>
+          {testResults.map((r, i) => (
+            <div key={i} className={`code-test-row ${r.pass ? 'pass' : 'fail'}`}>
+              <span className="code-test-icon">{r.pass ? '✓' : '✗'}</span>
+              <span className="code-test-call">{r.call}</span>
+              <span className="code-test-result">
+                {r.pass ? `→ ${r.got}` : `got ${r.got}, want ${r.exp}`}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProblemPanel({ problem }) {
+  const [activeTab, setActiveTab] = useState('problem'); // 'problem' | 'code'
   const details = PROBLEM_DETAILS[problem.id];
   const lc = PROBLEM_LC[problem.id];
+  const hasTests = Boolean(AUTO_TESTS[problem.id]);
+
   return (
-    <div className="mock-problem-panel">
-      <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'8px',marginBottom:'10px'}}>
-        <span className="mock-problem-title">{problem.title}</span>
-        <Badge diff={problem.diff} />
-        <span className="badge badge-pat">{problem.pat}</span>
-        {lc && (
-          <button onClick={() => window.open(`https://leetcode.com/problems/${lc.slug}/`,'_blank','noopener')}
-            style={{marginLeft:'auto',padding:'3px 10px',border:'1px solid #FB923C',borderRadius:'5px',background:'#FFF7ED',cursor:'pointer',fontSize:'11.5px',fontWeight:'700',color:'#C2410C',fontFamily:'inherit'}}>
-            LC #{lc.num}
-          </button>
-        )}
+    <div style={{marginBottom:'20px'}}>
+      {/* Tab bar */}
+      <div className="mock-tabs" style={{background:'#fff',borderRadius:'var(--radius) var(--radius) 0 0',border:'var(--border)',borderBottom:'none',padding:'0 16px'}}>
+        <div style={{display:'flex',flexWrap:'wrap',alignItems:'center',gap:'8px',padding:'12px 0',flex:1}}>
+          <span className="mock-problem-title" style={{fontSize:'15px'}}>{problem.title}</span>
+          <Badge diff={problem.diff} />
+          <span className="badge badge-pat">{problem.pat}</span>
+          {lc && (
+            <button onClick={() => window.open(`https://leetcode.com/problems/${lc.slug}/`,'_blank','noopener')}
+              style={{padding:'2px 8px',border:'1px solid #FB923C',borderRadius:'4px',background:'#FFF7ED',cursor:'pointer',fontSize:'11px',fontWeight:'700',color:'#C2410C',fontFamily:'inherit'}}>
+              LC #{lc.num}
+            </button>
+          )}
+        </div>
+        <button className={`mock-tab-btn${activeTab==='problem'?' active':''}`} onClick={() => setActiveTab('problem')}>Problem</button>
+        <button className={`mock-tab-btn${activeTab==='code'?' active':''}`} onClick={() => setActiveTab('code')}>
+          Code{hasTests ? ' + Tests' : ''}
+        </button>
       </div>
-      <p className="mock-problem-desc">{problem.desc}</p>
 
-      {details?.examples?.length > 0 && (
-        <>
-          <div className="mock-section-label">Examples</div>
-          <div className="mock-examples">
-            {details.examples.map((ex, idx) => (
-              <div key={idx} className="mock-example">
-                <div><span className="mock-example-label">Input:</span><span className="mock-example-io">{ex.i}</span></div>
-                <div><span className="mock-example-label">Output:</span><span className="mock-example-io">{ex.o}</span></div>
-                {ex.e && <div className="mock-example-explanation">Explanation: {ex.e}</div>}
+      {/* Problem tab */}
+      {activeTab === 'problem' && (
+        <div className="mock-problem-panel" style={{borderRadius:'0 0 var(--radius) var(--radius)',borderTop:'none'}}>
+          <p className="mock-problem-desc">{problem.desc}</p>
+          {details?.examples?.length > 0 && (
+            <>
+              <div className="mock-section-label">Examples</div>
+              <div className="mock-examples">
+                {details.examples.map((ex, idx) => (
+                  <div key={idx} className="mock-example">
+                    <div><span className="mock-example-label">Input:</span><span className="mock-example-io">{ex.i}</span></div>
+                    <div><span className="mock-example-label">Output:</span><span className="mock-example-io">{ex.o}</span></div>
+                    {ex.e && <div className="mock-example-explanation">Explanation: {ex.e}</div>}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </>
+            </>
+          )}
+          {details?.constraints?.length > 0 && (
+            <>
+              <div className="mock-section-label">Constraints</div>
+              <div className="mock-constraints">
+                {details.constraints.map((c, i) => <div key={i} className="mock-constraint">• {c}</div>)}
+              </div>
+            </>
+          )}
+        </div>
       )}
 
-      {details?.constraints?.length > 0 && (
-        <>
-          <div className="mock-section-label">Constraints</div>
-          <div className="mock-constraints">
-            {details.constraints.map((c, i) => (
-              <div key={i} className="mock-constraint">• {c}</div>
-            ))}
-          </div>
-        </>
-      )}
+      {/* Code tab */}
+      {activeTab === 'code' && <CodeRunner problem={problem} />}
     </div>
   );
 }
