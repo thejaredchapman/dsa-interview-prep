@@ -270,31 +270,6 @@
     .view-probs-hint { font-size: 11px; color: var(--blue); margin-top: 10px; font-weight: 500; opacity: 0; transition: opacity .18s; }
 
     /* ── POMODORO WIDGET ─────────────────────────── */
-    .pomo-widget {
-      position: fixed; bottom: 20px; left: 20px; z-index: 500;
-      background: #fff; border: var(--border); border-radius: 12px;
-      width: 192px; font-family: inherit;
-      box-shadow: 0 2px 16px rgba(0,0,0,.09);
-    }
-    .pomo-widget.minimized { width: 110px; }
-    .pomo-header { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-bottom: var(--border); }
-    .pomo-mode-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
-    .pomo-mode-work { color: var(--blue); }
-    .pomo-mode-brk { color: #059669; }
-    .pomo-tog { background: none; border: none; cursor: pointer; font-size: 13px; color: var(--muted); padding: 0; line-height: 1; }
-    .pomo-body { padding: 10px 12px 12px; }
-    .pomo-time-disp { font-family: 'Fira Code', monospace; font-size: 30px; font-weight: 600; text-align: center; margin-bottom: 4px; line-height: 1; }
-    .pomo-time-work { color: var(--blue); }
-    .pomo-time-brk { color: #059669; }
-    .pomo-time-idle { color: #111827; }
-    .pomo-sessions { font-size: 11px; color: var(--muted); text-align: center; margin-bottom: 10px; }
-    .pomo-ctrls { display: flex; gap: 5px; }
-    .pomo-btn { flex: 1; padding: 6px 4px; border-radius: 5px; border: var(--border); cursor: pointer; font-size: 11.5px; font-weight: 600; background: #fff; color: #374151; font-family: inherit; }
-    .pomo-btn.go { background: var(--blue); color: #fff; border-color: var(--blue); }
-    .pomo-btn:hover:not(.go) { background: #f5f5f5; }
-    .pomo-mini-body { padding: 8px 10px; text-align: center; }
-    .pomo-mini-time { font-family: 'Fira Code', monospace; font-size: 20px; font-weight: 600; color: #111827; }
-    .pomo-mini-mode { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .07em; }
 
     /* ── LEETCODE PROBLEMS ───────────────────────── */
     .lc-section { margin-top: 14px; }
@@ -432,42 +407,70 @@
     code.ic { font-family: 'Fira Code', monospace; font-size: 11.5px; background: #f3f4f6; padding: 1px 5px; border-radius: 3px; color: #374151; }
 
     /* ── SIDE TIMER ──────────────────────────────── */
+    /* side timer — collapsed strip */
     .side-timer {
       position: fixed; right: 0; top: 50%; transform: translateY(-50%);
       z-index: 400; background: #fff;
       border: var(--border); border-right: none;
       border-radius: 10px 0 0 10px;
-      width: 68px;
+      width: 58px;
       display: flex; flex-direction: column; align-items: center;
-      padding: 12px 0 12px;
+      padding: 10px 0;
       box-shadow: -2px 0 14px rgba(0,0,0,.07);
-      font-family: inherit;
-      user-select: none;
+      font-family: inherit; user-select: none;
+      transition: width .2s ease;
+      cursor: pointer;
     }
+    .side-timer.expanded {
+      width: 178px; cursor: default; padding: 14px 14px 12px;
+      align-items: stretch;
+    }
+    /* collapsed elements */
+    .st-collapsed-time {
+      font-family: 'Fira Code', monospace; font-size: 14px; font-weight: 700;
+      color: #111827; line-height: 1; text-align: center; letter-spacing: .02em;
+    }
+    .st-collapsed-time.running { color: var(--blue); }
+    .st-collapsed-time.done { color: #DC2626; }
+    .st-collapsed-hint { font-size: 8.5px; color: var(--muted); margin-top: 4px; text-align: center; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; }
+    /* expanded elements */
+    .st-exp-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .st-exp-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .st-close { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--muted); padding: 0; line-height: 1; }
+    .st-close:hover { color: #111827; }
+    .st-big-time {
+      font-family: 'Fira Code', monospace; font-size: 28px; font-weight: 700;
+      text-align: center; line-height: 1; margin-bottom: 4px; color: #111827;
+    }
+    .st-big-time.running { color: var(--blue); }
+    .st-big-time.done { color: #DC2626; }
+    .st-status { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .07em; text-align: center; margin-bottom: 10px; }
+    .st-incr-row { display: flex; gap: 6px; margin-bottom: 8px; }
     .st-incr-btn {
-      width: 48px; padding: 6px 0; border: var(--border); border-radius: 5px;
+      flex: 1; padding: 5px 0; border: var(--border); border-radius: 5px;
       background: #fff; cursor: pointer; font-size: 11px; font-weight: 700;
       color: #374151; font-family: inherit; text-align: center;
       transition: background .1s, color .1s;
     }
-    .st-incr-btn:hover { background: #EFF6FF; color: var(--blue); border-color: #93c5fd; }
+    .st-incr-btn:hover:not(:disabled) { background: #EFF6FF; color: var(--blue); border-color: #93c5fd; }
     .st-incr-btn:disabled { opacity: .3; cursor: default; }
-    .st-divider { width: 36px; height: 1px; background: #f3f4f6; margin: 8px 0; }
-    .st-time {
-      font-family: 'Fira Code', monospace; font-size: 17px; font-weight: 600;
-      letter-spacing: .03em; color: #111827; line-height: 1; text-align: center;
+    .st-custom-row { display: flex; gap: 6px; margin-bottom: 10px; align-items: center; }
+    .st-custom-input {
+      flex: 1; padding: 5px 7px; border: var(--border); border-radius: 5px;
+      font-family: 'Fira Code', monospace; font-size: 12px; font-weight: 600;
+      color: #111827; text-align: center; width: 100%;
     }
-    .st-time.running { color: var(--blue); }
-    .st-time.done { color: #DC2626; }
-    .st-label { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-top: 3px; margin-bottom: 8px; }
-    .st-ctrl-row { display: flex; gap: 4px; }
+    .st-custom-input:focus { outline: none; border-color: var(--blue); }
+    .st-custom-label { font-size: 11px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+    .st-ctrl-row { display: flex; gap: 5px; }
     .st-ctrl {
-      width: 22px; height: 22px; border: var(--border); border-radius: 4px;
-      background: #fff; cursor: pointer; font-size: 11px; display: flex;
-      align-items: center; justify-content: center; transition: background .1s;
+      flex: 1; padding: 6px 4px; border: var(--border); border-radius: 5px;
+      background: #fff; cursor: pointer; font-size: 11.5px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; transition: background .1s;
+      font-family: inherit;
     }
-    .st-ctrl:hover { background: #f5f5f5; }
-    .st-ctrl.go { background: var(--blue); color: #fff; border-color: var(--blue); font-size: 10px; }
+    .st-ctrl:hover:not(.go) { background: #f5f5f5; }
+    .st-ctrl.go { background: var(--blue); color: #fff; border-color: var(--blue); }
     @media (max-width: 640px) { .side-timer { display: none; } }
 
     /* ── RESPONSIVE ──────────────────────────────── */
@@ -3257,24 +3260,19 @@ function SideTimer() {
   const [timeLeft, setTimeLeft] = useState(ST_DEFAULT);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [customMins, setCustomMins] = useState('');
   const ivRef = useRef(null);
 
   useEffect(() => {
     if (running) {
       ivRef.current = setInterval(() => {
         setTimeLeft(t => {
-          if (t <= 1) {
-            clearInterval(ivRef.current);
-            setRunning(false);
-            setDone(true);
-            return 0;
-          }
+          if (t <= 1) { clearInterval(ivRef.current); setRunning(false); setDone(true); return 0; }
           return t - 1;
         });
       }, 1000);
-    } else {
-      clearInterval(ivRef.current);
-    }
+    } else { clearInterval(ivRef.current); }
     return () => clearInterval(ivRef.current);
   }, [running]);
 
@@ -3284,133 +3282,76 @@ function SideTimer() {
     if (!running) { setTimeLeft(next); setDone(false); }
   }
 
+  function applyCustom() {
+    const m = parseInt(customMins, 10);
+    if (m > 0 && m <= 180) {
+      const secs = m * 60;
+      setPreset(secs);
+      if (!running) { setTimeLeft(secs); setDone(false); }
+    }
+    setCustomMins('');
+  }
+
   function reset() {
     clearInterval(ivRef.current);
-    setRunning(false);
-    setDone(false);
-    setTimeLeft(preset);
+    setRunning(false); setDone(false); setTimeLeft(preset);
   }
 
   const mins = pad(Math.floor(timeLeft / 60));
   const secs = pad(timeLeft % 60);
-  const presetMins = preset / 60;
-  const timeClass = done ? 'st-time done' : running ? 'st-time running' : 'st-time';
+  const presetMins = Math.round(preset / 60);
+  const colClass = done ? 'done' : running ? 'running' : '';
+
+  if (!expanded) {
+    return (
+      <div className="side-timer" onClick={() => setExpanded(true)} title="Click to expand timer">
+        <div className={`st-collapsed-time ${colClass}`}>{mins}:{secs}</div>
+        <div className="st-collapsed-hint">{running ? '▶ on' : done ? 'done' : 'timer'}</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="side-timer">
-      <button className="st-incr-btn" onClick={() => changePreset(ST_STEP)} disabled={preset >= ST_MAX}>+15m</button>
-      <div className="st-divider" />
-      <div className={timeClass}>{mins}:{secs}</div>
-      <div className="st-label">{running ? 'running' : done ? 'done' : `${presetMins}m set`}</div>
+    <div className="side-timer expanded" onClick={e => e.stopPropagation()}>
+      <div className="st-exp-header">
+        <span className="st-exp-title">Timer</span>
+        <button className="st-close" onClick={() => setExpanded(false)}>×</button>
+      </div>
+
+      <div className={`st-big-time ${colClass}`}>{mins}:{secs}</div>
+      <div className="st-status">{running ? 'Running' : done ? 'Done!' : `${presetMins}m set`}</div>
+
+      {/* ±15m presets */}
+      <div className="st-incr-row">
+        <button className="st-incr-btn" onClick={() => changePreset(-ST_STEP)} disabled={preset <= ST_MIN}>−15m</button>
+        <button className="st-incr-btn" onClick={() => changePreset(ST_STEP)} disabled={preset >= ST_MAX}>+15m</button>
+      </div>
+
+      {/* Custom time input */}
+      <div className="st-custom-row">
+        <input
+          className="st-custom-input"
+          type="number"
+          min="1" max="180"
+          placeholder="min"
+          value={customMins}
+          onChange={e => setCustomMins(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && applyCustom()}
+        />
+        <button className="st-incr-btn" style={{flex:'none',padding:'5px 8px'}} onClick={applyCustom}>Set</button>
+      </div>
+
+      {/* Controls */}
       <div className="st-ctrl-row">
-        <button
-          className={`st-ctrl go`}
-          onClick={() => { if (done) reset(); else setRunning(r => !r); }}
-          title={done ? 'Reset' : running ? 'Pause' : 'Start'}
-        >
+        <button className="st-ctrl go" onClick={() => { if (done) reset(); else setRunning(r => !r); }}>
           {done ? '↺' : running ? '‖' : '▶'}
         </button>
-        <button className="st-ctrl" onClick={reset} title="Reset">↺</button>
+        <button className="st-ctrl" onClick={reset}>↺</button>
       </div>
-      <div className="st-divider" />
-      <button className="st-incr-btn" onClick={() => changePreset(-ST_STEP)} disabled={preset <= ST_MIN}>-15m</button>
     </div>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════
-   POMODORO WIDGET
-═══════════════════════════════════════════════════════════ */
-
-const POMO_WORK = 25 * 60;
-const POMO_BREAK = 5 * 60;
-
-function Pomodoro() {
-  const [mode, setMode] = useState('work'); // 'work' | 'break'
-  const [timeLeft, setTimeLeft] = useState(POMO_WORK);
-  const [running, setRunning] = useState(false);
-  const [sessions, setSessions] = useState(0);
-  const [minimized, setMinimized] = useState(false);
-  const ivRef = useRef(null);
-
-  useEffect(() => {
-    if (running) {
-      ivRef.current = setInterval(() => {
-        setTimeLeft(t => {
-          if (t <= 1) {
-            clearInterval(ivRef.current);
-            setRunning(false);
-            if (mode === 'work') {
-              setSessions(s => s + 1);
-              setMode('break');
-              setTimeLeft(POMO_BREAK);
-            } else {
-              setMode('work');
-              setTimeLeft(POMO_WORK);
-            }
-            return 0;
-          }
-          return t - 1;
-        });
-      }, 1000);
-    } else {
-      clearInterval(ivRef.current);
-    }
-    return () => clearInterval(ivRef.current);
-  }, [running, mode]);
-
-  function reset() {
-    clearInterval(ivRef.current);
-    setRunning(false);
-    setTimeLeft(mode === 'work' ? POMO_WORK : POMO_BREAK);
-  }
-
-  function switchMode(m) {
-    clearInterval(ivRef.current);
-    setRunning(false);
-    setMode(m);
-    setTimeLeft(m === 'work' ? POMO_WORK : POMO_BREAK);
-  }
-
-  const mins = pad(Math.floor(timeLeft / 60));
-  const secs = pad(timeLeft % 60);
-  const timeStr = `${mins}:${secs}`;
-  const timeClass = running ? (mode === 'work' ? 'pomo-time-work' : 'pomo-time-brk') : 'pomo-time-idle';
-  const modeLabel = mode === 'work' ? 'Work' : 'Break';
-  const modeClass = mode === 'work' ? 'pomo-mode-work' : 'pomo-mode-brk';
-
-  return (
-    <div className={`pomo-widget${minimized ? ' minimized' : ''}`}>
-      <div className="pomo-header">
-        {!minimized && <span className={`pomo-mode-label ${modeClass}`}>{modeLabel}</span>}
-        {minimized && <span style={{fontSize:'10px',fontWeight:'700',textTransform:'uppercase',color:'var(--muted)',letterSpacing:'.06em'}}>Pomo</span>}
-        <button className="pomo-tog" onClick={() => setMinimized(m => !m)} title={minimized ? 'Expand' : 'Minimize'}>
-          {minimized ? '▲' : '▼'}
-        </button>
-      </div>
-      {minimized ? (
-        <div className="pomo-mini-body" onClick={() => setMinimized(false)} style={{cursor:'pointer'}}>
-          <div className={`pomo-mini-time ${timeClass}`}>{timeStr}</div>
-          <div className="pomo-mini-mode">{modeLabel}</div>
-        </div>
-      ) : (
-        <div className="pomo-body">
-          <div className={`pomo-time-disp ${timeClass}`}>{timeStr}</div>
-          <div className="pomo-sessions">{sessions} session{sessions !== 1 ? 's' : ''} done</div>
-          <div className="pomo-ctrls">
-            <button className={`pomo-btn go`} onClick={() => setRunning(r => !r)}>
-              {running ? 'Pause' : 'Start'}
-            </button>
-            <button className="pomo-btn" onClick={reset}>Reset</button>
-            <button className="pomo-btn" onClick={() => switchMode(mode === 'work' ? 'break' : 'work')}>
-              {mode === 'work' ? '☕' : '💻'}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ═══════════════════════════════════════════════════════════
    APP SHELL
@@ -3481,7 +3422,6 @@ function App() {
       <div className="container">
         {content[activeTab]}
       </div>
-      <Pomodoro />
       <SideTimer />
       <div className="ai-fabs">
         <AskClaudeFab activeContext={TAB_CONTEXTS[activeTab]} />
